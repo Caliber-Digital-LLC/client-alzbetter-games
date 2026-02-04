@@ -1,6 +1,22 @@
+# Dependencies
 node_modules
+
+# Build output
 dist
+
+# OS files
 .DS_Store
-server/public
-vite.config.ts.*
+Thumbs.db
+
+# Editor
+.vscode
+*.swp
+*.swo
+
+# Misc
 *.tar.gz
+*.log
+
+# Replit artifacts
+.local
+.replit

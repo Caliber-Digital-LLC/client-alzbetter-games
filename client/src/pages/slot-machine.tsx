@@ -6,11 +6,14 @@ import { Volume2, VolumeX, Play, Square, RotateCcw } from "lucide-react";
 type SymbolType = "star" | "heart" | "horseshoe" | "bell" | "seven";
 
 const SYMBOLS: SymbolType[] = ["star", "heart", "horseshoe", "bell", "seven"];
+
+// Weighted reel strip - more clustering = better odds for player
+// Stars and hearts appear in pairs/clusters for frequent small wins
 const REEL_STRIP: SymbolType[] = [
-  "star", "heart", "horseshoe", "bell", "seven",
-  "star", "heart", "horseshoe", "bell", "star",
-  "heart", "horseshoe", "bell", "star", "seven",
-  "heart", "horseshoe", "star", "bell", "heart",
+  "star", "star", "heart", "heart", "horseshoe",
+  "bell", "star", "heart", "seven", "star",
+  "heart", "heart", "horseshoe", "bell", "star",
+  "star", "heart", "bell", "horseshoe", "seven",
 ];
 
 const SPIN_DURATIONS = [900, 1200, 1500];
@@ -272,7 +275,7 @@ function Confetti({ active }: { active: boolean }) {
   
   if (!active || prefersReducedMotion) return null;
   
-  const particles = Array.from({ length: 20 }, (_, i) => ({
+  const particles = Array.from({ length: 30 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
     delay: Math.random() * 0.5,
@@ -298,6 +301,78 @@ function Confetti({ active }: { active: boolean }) {
   );
 }
 
+function JackpotCelebration({ active, onClose }: { active: boolean; onClose: () => void }) {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  
+  useEffect(() => {
+    if (active) {
+      const timer = setTimeout(onClose, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [active, onClose]);
+  
+  if (!active) return null;
+  
+  const particles = Array.from({ length: 100 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 1,
+    duration: 3 + Math.random() * 2,
+    size: 8 + Math.random() * 16,
+    color: ["#FFD700", "#FF6B8A", "#7B68EE", "#4ECDC4", "#FFA500", "#FF4444", "#44FF44", "#4444FF"][i % 8],
+    shape: i % 3, // 0 = circle, 1 = square, 2 = star
+  }));
+  
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-label="Jackpot celebration"
+    >
+      {/* Confetti particles */}
+      {!prefersReducedMotion && particles.map((p) => (
+        <div
+          key={p.id}
+          className={`absolute animate-jackpot-confetti ${
+            p.shape === 0 ? 'rounded-full' : p.shape === 1 ? 'rounded-sm' : ''
+          }`}
+          style={{
+            left: `${p.x}%`,
+            top: '-20px',
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            transform: p.shape === 2 ? 'rotate(45deg)' : undefined,
+          }}
+        />
+      ))}
+      
+      {/* Jackpot text */}
+      <div className="text-center z-10 animate-jackpot-bounce">
+        <div className="text-6xl sm:text-8xl md:text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 drop-shadow-2xl mb-4">
+          🎰 JACKPOT! 🎰
+        </div>
+        <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+          +50 CREDITS!
+        </div>
+        <div className="text-lg text-amber-200 mt-4">
+          Tap anywhere to continue
+        </div>
+      </div>
+      
+      {/* Gold burst effect */}
+      {!prefersReducedMotion && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-amber-400/40 via-amber-500/10 to-transparent rounded-full animate-pulse" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReelSymbol({ symbol, position }: { symbol: SymbolType; position: "top" | "middle" | "bottom" }) {
   const opacity = position === "middle" ? 1 : 0.5;
   const scale = position === "middle" ? 1 : 0.85;
@@ -314,31 +389,34 @@ function ReelSymbol({ symbol, position }: { symbol: SymbolType; position: "top" 
 
 function Reel({ symbols, spinning, reelIndex }: { symbols: SymbolType[]; spinning: boolean; reelIndex: number }) {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const spinSymbols = spinning ? [...REEL_STRIP, ...REEL_STRIP, ...symbols] : symbols;
   
   return (
     <div 
-      className="flex flex-col gap-2 p-3 bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-lg border-2 border-amber-600/50 shadow-inner"
+      className="relative p-3 bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-lg border-2 border-amber-600/50 shadow-inner overflow-hidden"
+      style={{ height: '270px' }}
       aria-label={`Reel ${reelIndex + 1}`}
     >
-      {symbols.map((symbol, idx) => (
-        <div
-          key={idx}
-          className={`
-            transition-transform
-            ${spinning && !prefersReducedMotion ? "animate-reel-spin" : ""}
-          `}
-          style={{
-            animationDelay: spinning ? `${idx * 50}ms` : "0ms",
-          }}
-        >
-          <ReelSymbol
-            symbol={symbol}
-            position={idx === 0 ? "top" : idx === 1 ? "middle" : "bottom"}
-          />
-        </div>
-      ))}
+      <div 
+        className={`flex flex-col gap-2 ${spinning && !prefersReducedMotion ? 'animate-reel-scroll' : ''}`}
+        style={{
+          animationDuration: spinning ? `${0.8 + reelIndex * 0.3}s` : '0s',
+        }}
+      >
+        {spinSymbols.map((symbol, idx) => (
+          <div key={`${spinning ? 'spin' : 'static'}-${idx}`}>
+            <ReelSymbol
+              symbol={symbol}
+              position={!spinning && idx === 1 ? "middle" : (idx === 0 ? "top" : idx === spinSymbols.length - 1 ? "bottom" : "middle")}
+            />
+          </div>
+        ))}
+      </div>
       {/* Middle row highlight */}
-      <div className="absolute left-0 right-0 h-[85px] top-1/2 -translate-y-1/2 border-y-2 border-amber-400/60 pointer-events-none" />
+      <div className="absolute left-0 right-0 h-[85px] top-1/2 -translate-y-1/2 border-y-2 border-amber-400/60 pointer-events-none z-10" />
+      {/* Top/bottom fade masks */}
+      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-900/90 to-transparent pointer-events-none z-10" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/90 to-transparent pointer-events-none z-10" />
     </div>
   );
 }
@@ -359,6 +437,7 @@ export default function SlotMachine() {
   const [winResult, setWinResult] = useState<WinResult | null>(null);
   const [statusMessage, setStatusMessage] = useState("Tap Spin to play");
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showJackpot, setShowJackpot] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [soundInitialized, setSoundInitialized] = useState(false);
   
@@ -382,18 +461,35 @@ export default function SlotMachine() {
 
   const evaluateWin = useCallback((finalReels: SymbolType[][]): WinResult => {
     const middleRow = finalReels.map((reel) => reel[1]);
+    const topRow = finalReels.map((reel) => reel[0]);
+    const bottomRow = finalReels.map((reel) => reel[2]);
     
-    // Check for three of a kind
+    // Check for three 7s - MEGA JACKPOT!
+    if (middleRow[0] === "seven" && middleRow[1] === "seven" && middleRow[2] === "seven") {
+      return { type: "jackpot", amount: 50 };
+    }
+    
+    // Check for three of a kind on middle row
     if (middleRow[0] === middleRow[1] && middleRow[1] === middleRow[2]) {
-      if (middleRow[0] === "seven") {
-        return { type: "jackpot", amount: 25 };
-      }
       return { type: "three", amount: 10 };
     }
     
-    // Check for two of a kind (first two or last two)
+    // Check for three of a kind on top or bottom row (bonus!)
+    if (topRow[0] === topRow[1] && topRow[1] === topRow[2]) {
+      return { type: "three", amount: 5 };
+    }
+    if (bottomRow[0] === bottomRow[1] && bottomRow[1] === bottomRow[2]) {
+      return { type: "three", amount: 5 };
+    }
+    
+    // Check for two of a kind on middle row (first two or last two)
     if (middleRow[0] === middleRow[1] || middleRow[1] === middleRow[2]) {
       return { type: "two", amount: 2 };
+    }
+    
+    // Check for two of a kind at edges (first and last)
+    if (middleRow[0] === middleRow[2]) {
+      return { type: "two", amount: 1 };
     }
     
     return { type: "none", amount: 0 };
@@ -462,20 +558,22 @@ export default function SlotMachine() {
             
             if (result.amount > 0) {
               setCredits((prev) => prev + result.amount);
-              setShowCelebration(true);
               
               if (result.type === "jackpot") {
-                setStatusMessage("JACKPOT! +25 Credits!");
+                setShowJackpot(true);
+                setStatusMessage("🎰 JACKPOT! +50 Credits! 🎰");
                 if (!muted) audioManager.playBigWin();
               } else if (result.type === "three") {
-                setStatusMessage("Big Win! +10 Credits!");
+                setShowCelebration(true);
+                setStatusMessage(`Big Win! +${result.amount} Credits!`);
                 if (!muted) audioManager.playBigWin();
+                setTimeout(() => setShowCelebration(false), 2500);
               } else {
-                setStatusMessage("Winner! +2 Credits!");
+                setShowCelebration(true);
+                setStatusMessage(`Winner! +${result.amount} Credit${result.amount > 1 ? 's' : ''}!`);
                 if (!muted) audioManager.playWin();
+                setTimeout(() => setShowCelebration(false), 2500);
               }
-              
-              setTimeout(() => setShowCelebration(false), 2500);
             } else {
               setStatusMessage("Try again!");
             }
@@ -545,12 +643,9 @@ export default function SlotMachine() {
       )}
       
       {/* Header */}
-      <header className="text-center z-10 relative">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 bg-clip-text text-transparent drop-shadow-lg">
-          Calm Vegas Slots
-        </h1>
+      <header className="text-center z-10 relative w-full max-w-md">
         <p 
-          className="text-lg sm:text-xl text-amber-100/80 mt-2 min-h-[28px]"
+          className="text-2xl sm:text-3xl text-amber-100/90 min-h-[36px] font-semibold"
           role="status"
           aria-live="polite"
         >
@@ -558,42 +653,89 @@ export default function SlotMachine() {
         </p>
       </header>
 
-      {/* Slot Cabinet */}
-      <Card className="relative bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-600/60 p-4 sm:p-6 rounded-2xl shadow-2xl z-10">
-        {/* Cabinet frame glow */}
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-400/5 to-transparent rounded-2xl pointer-events-none" />
-        
-        {/* Win celebration */}
-        <Confetti active={showCelebration} />
-        
-        {/* Win glow overlay */}
-        {showCelebration && !prefersReducedMotion && (
-          <div className="absolute inset-0 bg-amber-400/10 rounded-2xl animate-pulse pointer-events-none" />
-        )}
-        
-        {/* Reels Container */}
-        <div 
-          className="flex gap-3 sm:gap-4 relative"
-          role="img"
-          aria-label="Slot machine reels"
+      {/* Slot Cabinet with Lever */}
+      <div className="flex items-center gap-2 sm:gap-4 z-10">
+        <Card className="relative bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-600/60 p-4 sm:p-6 rounded-2xl shadow-2xl">
+          {/* Cabinet frame glow */}
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-400/5 to-transparent rounded-2xl pointer-events-none" />
+          
+          {/* Win celebration */}
+          <Confetti active={showCelebration} />
+          
+          {/* Win glow overlay */}
+          {showCelebration && !prefersReducedMotion && (
+            <div className="absolute inset-0 bg-amber-400/10 rounded-2xl animate-pulse pointer-events-none" />
+          )}
+          
+          {/* Reels Container */}
+          <div 
+            className="flex gap-3 sm:gap-4 relative"
+            role="img"
+            aria-label="Slot machine reels"
+          >
+            {reels.map((reel, idx) => (
+              <Reel
+                key={idx}
+                symbols={reel.symbols}
+                spinning={reel.spinning}
+                reelIndex={idx}
+              />
+            ))}
+          </div>
+          
+          {/* Payline indicator */}
+          <div className="flex justify-center mt-4 gap-2">
+            <div className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
+            <span className="text-amber-200/80 text-sm">Middle Row Pays</span>
+            <div className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
+          </div>
+        </Card>
+
+        {/* Pull Lever */}
+        <button
+          type="button"
+          onMouseDown={() => {
+            if (!spinning && credits >= bet && !gameOver) {
+              spin();
+            }
+          }}
+          onTouchStart={() => {
+            if (!spinning && credits >= bet && !gameOver) {
+              spin();
+            }
+          }}
+          disabled={spinning || credits < bet || gameOver}
+          className="relative h-[280px] w-12 sm:w-16 flex flex-col items-center cursor-pointer disabled:cursor-not-allowed group touch-none select-none"
+          aria-label="Pull lever to spin"
         >
-          {reels.map((reel, idx) => (
-            <Reel
-              key={idx}
-              symbols={reel.symbols}
-              spinning={reel.spinning}
-              reelIndex={idx}
-            />
-          ))}
-        </div>
-        
-        {/* Payline indicator */}
-        <div className="flex justify-center mt-4 gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
-          <span className="text-amber-200/80 text-sm">Middle Row Pays</span>
-          <div className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
-        </div>
-      </Card>
+          {/* Lever track/slot */}
+          <div className="absolute inset-x-2 top-8 bottom-8 bg-gradient-to-b from-slate-700 to-slate-800 rounded-full border-2 border-slate-600 shadow-inner" />
+          
+          {/* Lever arm */}
+          <div 
+            className={`absolute inset-x-1 transition-all duration-500 ease-out ${
+              spinning ? 'top-[65%]' : 'top-2 group-hover:top-4 group-active:top-[65%]'
+            }`}
+            style={{ height: '35%' }}
+          >
+            {/* Arm shaft */}
+            <div className="absolute inset-x-2 top-8 bottom-0 bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500 rounded-full border border-slate-400" />
+            
+            {/* Ball handle */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 w-10 h-10 sm:w-12 sm:h-12">
+              <div className={`w-full h-full rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 border-4 border-red-400 shadow-lg ${
+                !spinning && 'group-hover:from-red-400 group-hover:via-red-500 group-hover:to-red-600'
+              }`}>
+                {/* Shine effect */}
+                <div className="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4 bg-white/40 rounded-full blur-sm" />
+              </div>
+            </div>
+          </div>
+          
+          {/* Base plate */}
+          <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-slate-700 to-slate-600 rounded-b-xl border-2 border-t-0 border-slate-500" />
+        </button>
+      </div>
 
       {/* Controls Section */}
       <div className="w-full max-w-md z-10 space-y-4">
@@ -704,18 +846,26 @@ export default function SlotMachine() {
         {/* Paytable */}
         <Card className="bg-slate-800/60 border border-amber-600/30 p-4 rounded-xl">
           <h2 className="text-amber-300 text-center font-semibold mb-3 text-lg">Payouts</h2>
-          <div className="grid grid-cols-2 gap-2 text-amber-100/80 text-sm sm:text-base">
+          <div className="grid grid-cols-1 gap-2 text-amber-100/80 text-sm sm:text-base">
             <div className="flex justify-between">
-              <span>Three 7s</span>
-              <span className="text-amber-300 font-bold">+25</span>
+              <span>🎰 Three 7s (JACKPOT!)</span>
+              <span className="text-yellow-300 font-bold">+50</span>
             </div>
             <div className="flex justify-between">
-              <span>Three of a kind</span>
+              <span>Three of a kind (middle)</span>
               <span className="text-amber-300 font-bold">+10</span>
             </div>
-            <div className="flex justify-between col-span-2">
-              <span>Two of a kind (adjacent)</span>
+            <div className="flex justify-between">
+              <span>Three of a kind (top/bottom)</span>
+              <span className="text-amber-300 font-bold">+5</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Two adjacent matching</span>
               <span className="text-amber-300 font-bold">+2</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Two matching (edges)</span>
+              <span className="text-amber-300 font-bold">+1</span>
             </div>
           </div>
         </Card>
@@ -730,6 +880,12 @@ export default function SlotMachine() {
         />
       )}
       
+      {/* Jackpot Celebration Overlay */}
+      <JackpotCelebration 
+        active={showJackpot} 
+        onClose={() => setShowJackpot(false)} 
+      />
+      
       {/* Custom styles for animations */}
       <style>{`
         @keyframes confetti {
@@ -743,18 +899,41 @@ export default function SlotMachine() {
           }
         }
         
-        @keyframes reel-spin {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          25% {
-            transform: translateY(-8px);
+        @keyframes jackpot-confetti {
+          0% {
+            transform: translateY(0) rotate(0deg) scale(1);
+            opacity: 1;
           }
           50% {
-            transform: translateY(0);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(1080deg) scale(0.5);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes jackpot-bounce {
+          0%, 100% {
+            transform: scale(1);
+          }
+          25% {
+            transform: scale(1.1);
+          }
+          50% {
+            transform: scale(1);
           }
           75% {
-            transform: translateY(8px);
+            transform: scale(1.05);
+          }
+        }
+        
+        @keyframes reel-scroll {
+          0% {
+            transform: translateY(-85%);
+          }
+          100% {
+            transform: translateY(0);
           }
         }
         
@@ -762,13 +941,27 @@ export default function SlotMachine() {
           animation: confetti 2s ease-out forwards;
         }
         
-        .animate-reel-spin {
-          animation: reel-spin 0.15s linear infinite;
+        .animate-jackpot-confetti {
+          animation: jackpot-confetti 4s ease-out forwards;
+        }
+        
+        .animate-jackpot-bounce {
+          animation: jackpot-bounce 0.6s ease-in-out infinite;
+        }
+        
+        .animate-reel-scroll {
+          animation: reel-scroll 1s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+        }
+        
+        .bg-gradient-radial {
+          background: radial-gradient(circle, var(--tw-gradient-stops));
         }
         
         @media (prefers-reduced-motion: reduce) {
           .animate-confetti,
-          .animate-reel-spin {
+          .animate-jackpot-confetti,
+          .animate-jackpot-bounce,
+          .animate-reel-scroll {
             animation: none;
           }
         }
