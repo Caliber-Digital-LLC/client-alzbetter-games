@@ -17,6 +17,13 @@ const games: GameCard[] = [
     emoji: "🎰",
     color: "from-purple-600 to-indigo-800",
   },
+  {
+    title: "Blackjack",
+    description: "Friendly casino classic. Beat the dealer to 21!",
+    path: "/blackjack",
+    emoji: "♠️",
+    color: "from-emerald-700 to-teal-900",
+  },
   // Add more games here as they're developed
   // {
   //   title: "Memory Match",
