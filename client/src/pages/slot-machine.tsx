@@ -36,13 +36,13 @@ function getRandomInt(max: number): number {
   return array[0] % max;
 }
 
-function SymbolSVG({ type, size = 80 }: { type: SymbolType; size?: number }) {
+function SymbolSVG({ type, className = "" }: { type: SymbolType; className?: string }) {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   
   switch (type) {
     case "star":
       return (
-        <svg width={size} height={size} viewBox="0 0 100 100" aria-label="Star symbol">
+        <svg className={className} viewBox="0 0 100 100" aria-label="Star symbol">
           <defs>
             <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFD700" />
@@ -67,7 +67,7 @@ function SymbolSVG({ type, size = 80 }: { type: SymbolType; size?: number }) {
       );
     case "heart":
       return (
-        <svg width={size} height={size} viewBox="0 0 100 100" aria-label="Heart symbol">
+        <svg className={className} viewBox="0 0 100 100" aria-label="Heart symbol">
           <defs>
             <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FF6B8A" />
@@ -92,7 +92,7 @@ function SymbolSVG({ type, size = 80 }: { type: SymbolType; size?: number }) {
       );
     case "horseshoe":
       return (
-        <svg width={size} height={size} viewBox="0 0 100 100" aria-label="Horseshoe symbol">
+        <svg className={className} viewBox="0 0 100 100" aria-label="Horseshoe symbol">
           <defs>
             <linearGradient id="shoeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#8B7355" />
@@ -122,7 +122,7 @@ function SymbolSVG({ type, size = 80 }: { type: SymbolType; size?: number }) {
       );
     case "bell":
       return (
-        <svg width={size} height={size} viewBox="0 0 100 100" aria-label="Bell symbol">
+        <svg className={className} viewBox="0 0 100 100" aria-label="Bell symbol">
           <defs>
             <linearGradient id="bellGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FFD700" />
@@ -149,7 +149,7 @@ function SymbolSVG({ type, size = 80 }: { type: SymbolType; size?: number }) {
       );
     case "seven":
       return (
-        <svg width={size} height={size} viewBox="0 0 100 100" aria-label="Lucky Seven symbol">
+        <svg className={className} viewBox="0 0 100 100" aria-label="Lucky Seven symbol">
           <defs>
             <linearGradient id="sevenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#7B68EE" />
@@ -379,10 +379,10 @@ function ReelSymbol({ symbol, position }: { symbol: SymbolType; position: "top" 
   
   return (
     <div
-      className="flex items-center justify-center transition-all duration-200"
+      className="flex items-center justify-center transition-all duration-200 w-[clamp(50px,12vw,70px)] h-[clamp(50px,12vw,70px)] md:w-[clamp(60px,10vw,80px)] md:h-[clamp(60px,10vw,80px)]"
       style={{ opacity, transform: `scale(${scale})` }}
     >
-      <SymbolSVG type={symbol} size={70} />
+      <SymbolSVG type={symbol} className="w-full h-full" />
     </div>
   );
 }
@@ -393,8 +393,7 @@ function Reel({ symbols, spinning, reelIndex }: { symbols: SymbolType[]; spinnin
   
   return (
     <div 
-      className="relative p-3 bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-lg border-2 border-amber-600/50 shadow-inner overflow-hidden"
-      style={{ height: '270px' }}
+      className="relative p-2 sm:p-3 bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-lg border-2 border-amber-600/50 shadow-inner overflow-hidden h-[clamp(180px,28vh,270px)]"
       aria-label={`Reel ${reelIndex + 1}`}
     >
       <div 
@@ -413,10 +412,10 @@ function Reel({ symbols, spinning, reelIndex }: { symbols: SymbolType[]; spinnin
         ))}
       </div>
       {/* Middle row highlight */}
-      <div className="absolute left-0 right-0 h-[85px] top-1/2 -translate-y-1/2 border-y-2 border-amber-400/60 pointer-events-none z-10" />
+      <div className="absolute left-0 right-0 h-[clamp(55px,13vw,85px)] top-1/2 -translate-y-1/2 border-y-2 border-amber-400/60 pointer-events-none z-10" />
       {/* Top/bottom fade masks */}
-      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-900/90 to-transparent pointer-events-none z-10" />
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-900/90 to-transparent pointer-events-none z-10" />
+      <div className="absolute top-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-b from-slate-900/90 to-transparent pointer-events-none z-10" />
+      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-t from-slate-900/90 to-transparent pointer-events-none z-10" />
     </div>
   );
 }
@@ -633,7 +632,7 @@ export default function SlotMachine() {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900/30 to-slate-900 flex flex-col items-center justify-between p-4 pb-8 overflow-hidden">
+    <div className="h-dvh max-h-dvh bg-gradient-to-b from-slate-900 via-purple-900/30 to-slate-900 flex flex-col items-center justify-between p-2 sm:p-4 pb-4 sm:pb-6 overflow-hidden">
       {/* Ambient glow effects */}
       {!prefersReducedMotion && (
         <>
@@ -643,9 +642,9 @@ export default function SlotMachine() {
       )}
       
       {/* Header */}
-      <header className="text-center z-10 relative w-full max-w-md">
+      <header className="text-center z-10 relative w-full max-w-md shrink-0">
         <p 
-          className="text-2xl sm:text-3xl text-amber-100/90 min-h-[36px] font-semibold"
+          className="text-xl sm:text-2xl md:text-3xl text-amber-100/90 min-h-[28px] sm:min-h-[36px] font-semibold"
           role="status"
           aria-live="polite"
         >
@@ -654,8 +653,8 @@ export default function SlotMachine() {
       </header>
 
       {/* Slot Cabinet with Lever */}
-      <div className="flex items-center gap-2 sm:gap-4 z-10">
-        <Card className="relative bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-600/60 p-4 sm:p-6 rounded-2xl shadow-2xl">
+      <div className="flex items-center gap-2 sm:gap-4 z-10 shrink-0">
+        <Card className="relative bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-600/60 p-3 sm:p-4 md:p-6 rounded-2xl shadow-2xl">
           {/* Cabinet frame glow */}
           <div className="absolute inset-0 bg-gradient-to-b from-amber-400/5 to-transparent rounded-2xl pointer-events-none" />
           
@@ -669,7 +668,7 @@ export default function SlotMachine() {
           
           {/* Reels Container */}
           <div 
-            className="flex gap-3 sm:gap-4 relative"
+            className="flex gap-2 sm:gap-3 md:gap-4 relative"
             role="img"
             aria-label="Slot machine reels"
           >
@@ -684,10 +683,10 @@ export default function SlotMachine() {
           </div>
           
           {/* Payline indicator */}
-          <div className="flex justify-center mt-4 gap-2">
-            <div className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
-            <span className="text-amber-200/80 text-sm">Middle Row Pays</span>
-            <div className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
+          <div className="flex justify-center mt-2 sm:mt-4 gap-2">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
+            <span className="text-amber-200/80 text-xs sm:text-sm">Middle Row Pays</span>
+            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
           </div>
         </Card>
 
@@ -705,7 +704,7 @@ export default function SlotMachine() {
             }
           }}
           disabled={spinning || credits < bet || gameOver}
-          className="relative h-[280px] w-12 sm:w-16 flex flex-col items-center cursor-pointer disabled:cursor-not-allowed group touch-none select-none"
+          className="relative h-[clamp(180px,28vh,280px)] w-10 sm:w-12 md:w-16 flex flex-col items-center cursor-pointer disabled:cursor-not-allowed group touch-none select-none"
           aria-label="Pull lever to spin"
         >
           {/* Lever track/slot */}
@@ -722,38 +721,38 @@ export default function SlotMachine() {
             <div className="absolute inset-x-2 top-8 bottom-0 bg-gradient-to-r from-slate-500 via-slate-400 to-slate-500 rounded-full border border-slate-400" />
             
             {/* Ball handle */}
-            <div className="absolute left-1/2 -translate-x-1/2 top-0 w-10 h-10 sm:w-12 sm:h-12">
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12">
               <div className={`w-full h-full rounded-full bg-gradient-to-br from-red-500 via-red-600 to-red-700 border-4 border-red-400 shadow-lg ${
                 !spinning && 'group-hover:from-red-400 group-hover:via-red-500 group-hover:to-red-600'
               }`}>
                 {/* Shine effect */}
-                <div className="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4 bg-white/40 rounded-full blur-sm" />
+                <div className="absolute top-1 left-1 w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 bg-white/40 rounded-full blur-sm" />
               </div>
             </div>
           </div>
           
           {/* Base plate */}
-          <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-slate-700 to-slate-600 rounded-b-xl border-2 border-t-0 border-slate-500" />
+          <div className="absolute bottom-0 inset-x-0 h-6 sm:h-8 bg-gradient-to-t from-slate-700 to-slate-600 rounded-b-xl border-2 border-t-0 border-slate-500" />
         </button>
       </div>
 
       {/* Controls Section */}
-      <div className="w-full max-w-md z-10 space-y-4">
+      <div className="w-full max-w-md z-10 space-y-2 sm:space-y-3 md:space-y-4 shrink-0">
         {/* Credits Display */}
-        <div className="flex justify-center gap-6 text-center">
-          <div className="bg-slate-800/80 border border-amber-600/40 rounded-xl px-6 py-3">
-            <div className="text-amber-300/70 text-sm uppercase tracking-wider">Credits</div>
+        <div className="flex justify-center gap-4 sm:gap-6 text-center">
+          <div className="bg-slate-800/80 border border-amber-600/40 rounded-xl px-4 sm:px-6 py-2 sm:py-3">
+            <div className="text-amber-300/70 text-xs sm:text-sm uppercase tracking-wider">Credits</div>
             <div 
-              className="text-3xl sm:text-4xl font-bold text-amber-100"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-100"
               aria-live="polite"
               data-testid="text-credits"
             >
               {credits}
             </div>
           </div>
-          <div className="bg-slate-800/80 border border-amber-600/40 rounded-xl px-6 py-3">
-            <div className="text-amber-300/70 text-sm uppercase tracking-wider">Bet</div>
-            <div className="text-3xl sm:text-4xl font-bold text-amber-100" data-testid="text-bet">
+          <div className="bg-slate-800/80 border border-amber-600/40 rounded-xl px-4 sm:px-6 py-2 sm:py-3">
+            <div className="text-amber-300/70 text-xs sm:text-sm uppercase tracking-wider">Bet</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-100" data-testid="text-bet">
               {bet}
             </div>
           </div>
@@ -764,23 +763,23 @@ export default function SlotMachine() {
           <Button
             onClick={spin}
             disabled={spinning || credits < bet}
-            className="w-full h-20 sm:h-24 text-2xl sm:text-3xl font-bold bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 border-2 border-amber-400 shadow-lg shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
+            className="w-full h-14 sm:h-16 md:h-20 text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 border-2 border-amber-400 shadow-lg shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
             aria-label={spinning ? "Spinning..." : autoPlay ? "Auto spinning" : "Spin the reels"}
             data-testid="button-spin"
           >
             {spinning ? (
-              <span className="flex items-center gap-3">
-                <div className={`w-6 h-6 border-4 border-slate-900/30 border-t-slate-900 rounded-full ${!prefersReducedMotion ? "animate-spin" : ""}`} />
+              <span className="flex items-center gap-2 sm:gap-3">
+                <div className={`w-5 h-5 sm:w-6 sm:h-6 border-4 border-slate-900/30 border-t-slate-900 rounded-full ${!prefersReducedMotion ? "animate-spin" : ""}`} />
                 SPINNING...
               </span>
             ) : autoPlay ? (
-              <span className="flex items-center gap-3">
-                <Play className="w-8 h-8" />
+              <span className="flex items-center gap-2 sm:gap-3">
+                <Play className="w-6 h-6 sm:w-8 sm:h-8" />
                 AUTO SPIN
               </span>
             ) : (
-              <span className="flex items-center gap-3">
-                <Play className="w-8 h-8" />
+              <span className="flex items-center gap-2 sm:gap-3">
+                <Play className="w-6 h-6 sm:w-8 sm:h-8" />
                 SPIN
               </span>
             )}
@@ -788,24 +787,24 @@ export default function SlotMachine() {
         ) : (
           <Button
             onClick={handleReset}
-            className="w-full h-20 sm:h-24 text-2xl sm:text-3xl font-bold bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white border-2 border-emerald-400 shadow-lg shadow-emerald-500/30 rounded-xl"
+            className="w-full h-14 sm:h-16 md:h-20 text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white border-2 border-emerald-400 shadow-lg shadow-emerald-500/30 rounded-xl"
             aria-label="Reset credits and play again"
             data-testid="button-reset"
           >
-            <span className="flex items-center gap-3">
-              <RotateCcw className="w-8 h-8" />
+            <span className="flex items-center gap-2 sm:gap-3">
+              <RotateCcw className="w-6 h-6 sm:w-8 sm:h-8" />
               PLAY AGAIN
             </span>
           </Button>
         )}
 
         {/* Secondary Controls */}
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <Button
             onClick={handleAutoToggle}
             variant={autoPlay ? "default" : "outline"}
             disabled={spinning || gameOver}
-            className={`flex-1 h-14 text-lg font-semibold rounded-xl ${
+            className={`flex-1 h-10 sm:h-12 md:h-14 text-base sm:text-lg font-semibold rounded-xl ${
               autoPlay
                 ? "bg-purple-600 hover:bg-purple-500 text-white border-purple-400"
                 : "border-amber-600/60 text-amber-200 hover:bg-amber-900/30"
@@ -816,12 +815,12 @@ export default function SlotMachine() {
           >
             {autoPlay ? (
               <span className="flex items-center gap-2">
-                <Square className="w-5 h-5" />
+                <Square className="w-4 h-4 sm:w-5 sm:h-5" />
                 STOP
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Play className="w-5 h-5" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
                 AUTO
               </span>
             )}
@@ -830,23 +829,23 @@ export default function SlotMachine() {
           <Button
             onClick={handleMuteToggle}
             variant="outline"
-            className="h-14 px-6 text-lg font-semibold border-amber-600/60 text-amber-200 hover:bg-amber-900/30 rounded-xl"
+            className="h-10 sm:h-12 md:h-14 px-4 sm:px-6 text-base sm:text-lg font-semibold border-amber-600/60 text-amber-200 hover:bg-amber-900/30 rounded-xl"
             aria-label={muted ? "Unmute sounds" : "Mute sounds"}
             aria-pressed={muted}
             data-testid="button-mute"
           >
             {muted ? (
-              <VolumeX className="w-6 h-6" />
+              <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <Volume2 className="w-6 h-6" />
+              <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />
             )}
           </Button>
         </div>
 
         {/* Paytable */}
-        <Card className="bg-slate-800/60 border border-amber-600/30 p-4 rounded-xl">
-          <h2 className="text-amber-300 text-center font-semibold mb-3 text-lg">Payouts</h2>
-          <div className="grid grid-cols-1 gap-2 text-amber-100/80 text-sm sm:text-base">
+        <Card className="bg-slate-800/60 border border-amber-600/30 p-2 sm:p-3 md:p-4 rounded-xl">
+          <h2 className="text-amber-300 text-center font-semibold mb-1 sm:mb-2 md:mb-3 text-base sm:text-lg">Payouts</h2>
+          <div className="grid grid-cols-1 gap-0.5 sm:gap-1 md:gap-2 text-amber-100/80 text-xs sm:text-sm md:text-base">
             <div className="flex justify-between">
               <span>🎰 Three 7s (JACKPOT!)</span>
               <span className="text-yellow-300 font-bold">+50</span>
@@ -955,6 +954,14 @@ export default function SlotMachine() {
         
         .bg-gradient-radial {
           background: radial-gradient(circle, var(--tw-gradient-stops));
+        }
+        
+        /* Landscape tablet optimizations */
+        @media (orientation: landscape) and (max-height: 600px) {
+          .h-dvh {
+            padding-top: 0.25rem !important;
+            padding-bottom: 0.5rem !important;
+          }
         }
         
         @media (prefers-reduced-motion: reduce) {
