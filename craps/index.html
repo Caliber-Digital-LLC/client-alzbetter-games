@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1a4a4a">
+  <title>Craps</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 
+  ═══════════════════════════════════════════════════════════════════════════════
+  TUNING SECTION - Adjust these values in craps.js:
+  ═══════════════════════════════════════════════════════════════════════════════
+  
+  GAME SETTINGS (search for "CONFIG" in craps.js):
+  - STARTING_CREDITS: 200        // Initial credits
+  - BET_INCREMENT: 5             // +/- button step
+  - MIN_BET: 5                   // Minimum bet amount
+  - MAX_BET: 50                  // Maximum bet amount
+  - AUTO_ROLL_DELAY: 2500        // ms between auto rolls
+  - LUCKY_BOOST_FREQUENCY: 12    // Average rolls between lucky boosts (1 in N)
+  
+  VISUAL SETTINGS (in styles.css):
+  - --felt-color: #1a5a4a        // Table felt color
+  - --felt-dark: #0d3d32         // Darker felt accents
+  - --accent-gold: #d4a853       // Gold highlight color
+  - --base-font-size: 18px       // Base font size
+  
+  SOUND SETTINGS (in craps.js AudioManager):
+  - masterVolume: 0.6            // Default volume (0-1)
+  - Individual sound frequencies and durations in AudioManager methods
+  
+  ═══════════════════════════════════════════════════════════════════════════════
+  -->
+
+  <div id="app" class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button id="btn-help" class="icon-btn" aria-label="Help">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+        </button>
+        <h1 class="title">Craps</h1>
+      </div>
+      <div class="header-right">
+        <button id="btn-settings" class="icon-btn" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
+        <button id="btn-sound" class="icon-btn" aria-label="Toggle Sound">
+          <svg id="icon-sound-on" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          <svg id="icon-sound-off" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Credits Display -->
+    <div class="credits-bar">
+      <div class="credit-display">
+        <span class="credit-label">Credits</span>
+        <span id="credits-value" class="credit-value">200</span>
+      </div>
+      <div class="bet-display">
+        <span class="credit-label">Current Bet</span>
+        <span id="bet-value" class="credit-value">0</span>
+      </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <main class="game-area">
+      <!-- Phase & Point Display -->
+      <div class="phase-display">
+        <div id="phase-label" class="phase-label">Come-Out Roll</div>
+        <div class="point-display">
+          <span class="point-label">Point:</span>
+          <span id="point-value" class="point-value">—</span>
+        </div>
+      </div>
+
+      <!-- Instruction Line -->
+      <div id="instruction" class="instruction" aria-live="polite">
+        Place your Pass Line bet, then tap ROLL.
+      </div>
+
+      <!-- Dice Area -->
+      <div class="dice-container">
+        <div id="dice-area" class="dice-area">
+          <div id="die1" class="die" aria-label="Die 1">
+            <svg viewBox="0 0 100 100" class="die-svg"></svg>
+          </div>
+          <div id="die2" class="die" aria-label="Die 2">
+            <svg viewBox="0 0 100 100" class="die-svg"></svg>
+          </div>
+        </div>
+        <div id="roll-total" class="roll-total"></div>
+      </div>
+
+      <!-- Roll History -->
+      <div class="history-section">
+        <span class="history-label">Last Rolls:</span>
+        <div id="roll-history" class="roll-history">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Betting Panel -->
+      <div class="bet-panel">
+        <!-- Pass Line Bet -->
+        <div id="pass-bet-card" class="bet-card pass-card">
+          <div class="bet-card-header">
+            <span class="bet-name">Pass Line</span>
+            <span id="pass-bet-amount" class="bet-amount">0</span>
+          </div>
+          <div class="bet-controls">
+            <button id="pass-minus" class="bet-btn minus" aria-label="Decrease Pass bet">−</button>
+            <button id="pass-quick" class="bet-btn quick" aria-label="Quick bet Pass">+5</button>
+            <button id="pass-plus" class="bet-btn plus" aria-label="Increase Pass bet">+</button>
+          </div>
+        </div>
+
+        <!-- More Bets Toggle -->
+        <button id="more-bets-toggle" class="more-bets-toggle">
+          <span>More Bets</span>
+          <svg id="chevron-icon" viewBox="0 0 24 24" fill="currentColor" class="chevron"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        </button>
+
+        <!-- Expandable Bets -->
+        <div id="more-bets" class="more-bets collapsed">
+          <!-- Don't Pass Bet -->
+          <div id="dontpass-bet-card" class="bet-card dontpass-card">
+            <div class="bet-card-header">
+              <span class="bet-name">Don't Pass</span>
+              <span id="dontpass-bet-amount" class="bet-amount">0</span>
+            </div>
+            <div class="bet-controls">
+              <button id="dontpass-minus" class="bet-btn minus" aria-label="Decrease Don't Pass bet">−</button>
+              <button id="dontpass-quick" class="bet-btn quick" aria-label="Quick bet Don't Pass">+5</button>
+              <button id="dontpass-plus" class="bet-btn plus" aria-label="Increase Don't Pass bet">+</button>
+            </div>
+          </div>
+
+          <!-- Field Bet -->
+          <div id="field-bet-card" class="bet-card field-card">
+            <div class="bet-card-header">
+              <span class="bet-name">Field</span>
+              <span class="bet-subtitle">(One Roll)</span>
+              <span id="field-bet-amount" class="bet-amount">0</span>
+            </div>
+            <div class="bet-controls">
+              <button id="field-minus" class="bet-btn minus" aria-label="Decrease Field bet">−</button>
+              <button id="field-quick" class="bet-btn quick" aria-label="Quick bet Field">+5</button>
+              <button id="field-plus" class="bet-btn plus" aria-label="Increase Field bet">+</button>
+            </div>
+            <div class="field-info">Wins: 2,3,4,9,10,11,12 • 2&12 pay 2:1</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Action Buttons -->
+    <div class="action-bar">
+      <button id="btn-clear" class="action-btn secondary">Clear Bets</button>
+      <button id="btn-roll" class="action-btn primary roll-btn">
+        <span class="roll-text">ROLL</span>
+      </button>
+      <div class="auto-roll-toggle">
+        <input type="checkbox" id="auto-roll" class="toggle-input">
+        <label for="auto-roll" class="toggle-label">Auto</label>
+      </div>
+    </div>
+
+    <!-- Result Overlay -->
+    <div id="result-overlay" class="result-overlay hidden">
+      <div class="result-content">
+        <div id="result-icon" class="result-icon"></div>
+        <div id="result-title" class="result-title"></div>
+        <div id="result-message" class="result-message"></div>
+        <div id="result-payout" class="result-payout"></div>
+        <button id="btn-continue" class="action-btn primary">Continue</button>
+      </div>
+    </div>
+
+    <!-- Out of Credits Overlay -->
+    <div id="gameover-overlay" class="gameover-overlay hidden">
+      <div class="gameover-content">
+        <div class="gameover-icon">🎰</div>
+        <h2>Thanks for Playing!</h2>
+        <p>You've used all your credits.</p>
+        <button id="btn-reset-credits" class="action-btn primary">Reset Credits</button>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal hidden">
+      <div class="modal-content">
+        <button id="close-help" class="modal-close" aria-label="Close">&times;</button>
+        <h2>How to Play Craps</h2>
+        
+        <div class="help-section">
+          <h3>🎲 The Basics</h3>
+          <ul>
+            <li><strong>Pass Line</strong> is the main bet. Place it before the Come-Out Roll.</li>
+            <li>Roll the dice and see what happens!</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>📍 Come-Out Roll</h3>
+          <ul>
+            <li><strong>7 or 11</strong> = Pass Line wins immediately!</li>
+            <li><strong>2, 3, or 12</strong> = Pass Line loses (called "craps")</li>
+            <li><strong>4, 5, 6, 8, 9, or 10</strong> = That number becomes "the Point"</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🎯 Point Phase</h3>
+          <ul>
+            <li>Keep rolling until you hit the Point or roll a 7</li>
+            <li><strong>Hit the Point</strong> = Pass Line wins!</li>
+            <li><strong>Roll a 7</strong> = Pass Line loses ("Seven Out")</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🍀 Lucky Boost</h3>
+          <p>Occasionally, a losing roll becomes a "push" and your bet is returned. It's our way of keeping things fun!</p>
+        </div>
+
+        <div class="help-section">
+          <h3>🃏 Other Bets</h3>
+          <ul>
+            <li><strong>Don't Pass</strong> = Opposite of Pass Line</li>
+            <li><strong>Field</strong> = One-roll bet. Wins on 2,3,4,9,10,11,12</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <button id="close-settings" class="modal-close" aria-label="Close">&times;</button>
+        <h2>Settings</h2>
+        
+        <div class="setting-row">
+          <label for="volume-slider">Volume</label>
+          <input type="range" id="volume-slider" min="0" max="100" value="60" class="volume-slider">
+        </div>
+
+        <div class="setting-row">
+          <label for="lucky-boost-toggle">Lucky Boost</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="lucky-boost-toggle" checked>
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label for="high-contrast-toggle">High Contrast</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="high-contrast-toggle">
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label for="reduced-motion-toggle">Reduce Motion</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="reduced-motion-toggle">
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sound Enable Prompt (hidden by default - sound enabled) -->
+    <div id="sound-prompt" class="sound-prompt hidden">
+      <button id="enable-sound" class="sound-prompt-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        <span>Tap to Enable Sound</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="craps.js"></script>
+</body>
+</html>

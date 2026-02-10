@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1a3d2e">
+  <title>Roulette</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!--
+  ═══════════════════════════════════════════════════════════════════════════════
+  ROULETTE - TUNING SECTION
+  ═══════════════════════════════════════════════════════════════════════════════
+  
+  CONFIGURATION (in roulette.js CONFIG object):
+  
+  CREDITS & BETTING:
+  - STARTING_CREDITS: 200     // Initial credit balance
+  - CHIP_VALUES: [1, 5, 10]   // Available chip denominations
+  - DEFAULT_CHIP: 5           // Initially selected chip value
+  
+  BET TYPES IN SIMPLE MODE:
+  - SIMPLE_BETS: ['red', 'black', 'even', 'odd', 'low', 'high', 'straight']
+  - Set ENABLE_DOZENS: true/false to show dozen bets (1-12, 13-24, 25-36)
+  - Set ENABLE_COLUMNS: true/false to show column bets
+  
+  LUCKY BOOST:
+  - LUCKY_BOOST_ENABLED: true   // Default on/off state
+  - LUCKY_BOOST_RATE: 0.08      // 8% chance to push on loss
+  
+  SPIN ANIMATION:
+  - SPIN_DURATION: 5000         // Base spin time in ms
+  - SPIN_ROTATIONS: 5           // Number of full wheel rotations
+  - BALL_DURATION: 5500         // Ball animation duration
+  - REDUCED_SPIN_DURATION: 2000 // Duration when reduced motion
+  
+  WHEEL APPEARANCE:
+  - WHEEL_COLORS object controls segment colors
+  - FELT_COLOR: '#1a5c3e'       // Table felt green
+  - ACCENT_COLOR: '#d4a853'     // Gold accent color
+  
+  SOUNDS:
+  - All sounds generated via WebAudio
+  - Adjust frequencies and durations in AudioManager methods
+  - Master volume controlled by game.volume (0.0-1.0)
+  
+  ═══════════════════════════════════════════════════════════════════════════════
+  -->
+
+  <!-- Sound Enable Prompt (iOS requirement) -->
+  <div id="sound-prompt" class="sound-prompt hidden">
+    <button id="enable-sound" class="sound-enable-btn" aria-label="Enable sound">
+      🔊 Tap to Enable Sound
+    </button>
+  </div>
+
+  <!-- Main Game Container -->
+  <div class="game-container">
+    
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="title">Roulette</h1>
+      </div>
+      <div class="header-center">
+        <div class="stat-group">
+          <div class="stat">
+            <span class="stat-label">Credits</span>
+            <span id="credits-value" class="stat-value credits" aria-live="polite">200</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Total Bet</span>
+            <span id="total-bet-value" class="stat-value bet">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="btn-sound" class="icon-btn" aria-label="Toggle sound">
+          <svg id="icon-sound-on" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <svg id="icon-sound-off" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+        </button>
+        <button id="btn-help" class="icon-btn" aria-label="Help">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
+        <button id="btn-settings" class="icon-btn" aria-label="Settings">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="main-area">
+      
+      <!-- Wheel Section -->
+      <section class="wheel-section" aria-label="Roulette wheel">
+        <div class="wheel-container">
+          <canvas id="wheel-canvas" width="400" height="400"></canvas>
+          <div id="ball-marker" class="ball-marker hidden"></div>
+        </div>
+        
+        <!-- Result Display -->
+        <div id="result-display" class="result-display hidden" aria-live="assertive">
+          <div id="result-number" class="result-number"></div>
+          <div id="result-color" class="result-color"></div>
+        </div>
+        
+        <!-- Win Display -->
+        <div id="win-display" class="win-display hidden" aria-live="polite">
+          <div id="win-message" class="win-message"></div>
+          <div id="win-amount" class="win-amount"></div>
+          <div id="win-breakdown" class="win-breakdown"></div>
+        </div>
+      </section>
+
+      <!-- Bet Panel -->
+      <section class="bet-panel" aria-label="Betting controls">
+        
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <button id="mode-simple" class="mode-btn active" aria-pressed="true">Simple Bets</button>
+          <button id="mode-table" class="mode-btn" aria-pressed="false">Table View</button>
+        </div>
+
+        <!-- Chip Selector -->
+        <div class="chip-selector" role="radiogroup" aria-label="Select chip value">
+          <button class="chip chip-1" data-value="1" role="radio" aria-checked="false">1</button>
+          <button class="chip chip-5 selected" data-value="5" role="radio" aria-checked="true">5</button>
+          <button class="chip chip-10" data-value="10" role="radio" aria-checked="false">10</button>
+        </div>
+
+        <!-- Simple Bets Mode -->
+        <div id="simple-bets" class="simple-bets">
+          
+          <!-- Outside Bets -->
+          <div class="bet-grid outside-bets">
+            <button class="bet-tile red" data-bet="red" aria-label="Bet on Red">
+              <span class="bet-icon">🔴</span>
+              <span class="bet-label">Red</span>
+              <span class="bet-odds">1:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile black" data-bet="black" aria-label="Bet on Black">
+              <span class="bet-icon">⚫</span>
+              <span class="bet-label">Black</span>
+              <span class="bet-odds">1:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile even" data-bet="even" aria-label="Bet on Even">
+              <span class="bet-icon">2,4,6</span>
+              <span class="bet-label">Even</span>
+              <span class="bet-odds">1:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile odd" data-bet="odd" aria-label="Bet on Odd">
+              <span class="bet-icon">1,3,5</span>
+              <span class="bet-label">Odd</span>
+              <span class="bet-odds">1:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile low" data-bet="low" aria-label="Bet on 1 to 18">
+              <span class="bet-icon">1–18</span>
+              <span class="bet-label">Low</span>
+              <span class="bet-odds">1:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile high" data-bet="high" aria-label="Bet on 19 to 36">
+              <span class="bet-icon">19–36</span>
+              <span class="bet-label">High</span>
+              <span class="bet-odds">1:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+          </div>
+
+          <!-- Dozens (optional) -->
+          <div class="bet-grid dozens-bets">
+            <button class="bet-tile dozen" data-bet="dozen1" aria-label="Bet on 1st Dozen (1-12)">
+              <span class="bet-label">1st 12</span>
+              <span class="bet-odds">2:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile dozen" data-bet="dozen2" aria-label="Bet on 2nd Dozen (13-24)">
+              <span class="bet-label">2nd 12</span>
+              <span class="bet-odds">2:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            <button class="bet-tile dozen" data-bet="dozen3" aria-label="Bet on 3rd Dozen (25-36)">
+              <span class="bet-label">3rd 12</span>
+              <span class="bet-odds">2:1</span>
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+          </div>
+
+          <!-- Straight Up Number Picker -->
+          <div class="straight-up-section">
+            <div class="straight-up-header">
+              <span class="straight-up-title">Pick a Number</span>
+              <span class="straight-up-odds">35:1</span>
+            </div>
+            
+            <div class="number-controls">
+              <button id="num-minus" class="num-btn" aria-label="Decrease number">−</button>
+              <div id="selected-number" class="selected-number" aria-live="polite">
+                <span class="num-value">17</span>
+                <span class="num-color"></span>
+              </div>
+              <button id="num-plus" class="num-btn" aria-label="Increase number">+</button>
+            </div>
+            
+            <div class="quick-picks">
+              <button id="pick-random" class="quick-btn">🎲 Random</button>
+              <button id="pick-last" class="quick-btn" disabled>↩ Last Win</button>
+              <button id="pick-zero" class="quick-btn">0️⃣ Zero</button>
+            </div>
+            
+            <button id="add-straight" class="add-straight-btn" data-bet="straight" aria-label="Add straight up bet">
+              Add Number Bet
+              <span class="bet-chips hidden" data-chips="0"></span>
+            </button>
+            
+            <!-- Number Grid (expandable) -->
+            <button id="toggle-grid" class="toggle-grid-btn" aria-expanded="false">
+              Show Number Grid ▼
+            </button>
+            <div id="number-grid" class="number-grid hidden" role="grid" aria-label="Number selection grid">
+              <!-- Numbers 0-36 generated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Table View Mode (Advanced) -->
+        <div id="table-bets" class="table-bets hidden">
+          <div class="table-layout">
+            <!-- Zero -->
+            <div class="table-zero">
+              <button class="table-num zero" data-num="0">0</button>
+            </div>
+            
+            <!-- Number Grid -->
+            <div class="table-numbers" id="table-numbers">
+              <!-- Generated by JS: 1-36 in 3 columns -->
+            </div>
+            
+            <!-- Columns -->
+            <div class="table-columns">
+              <button class="table-col" data-bet="col1">2:1</button>
+              <button class="table-col" data-bet="col2">2:1</button>
+              <button class="table-col" data-bet="col3">2:1</button>
+            </div>
+            
+            <!-- Outside bets row -->
+            <div class="table-outside">
+              <button class="table-outside-btn" data-bet="low">1-18</button>
+              <button class="table-outside-btn" data-bet="even">EVEN</button>
+              <button class="table-outside-btn red" data-bet="red">RED</button>
+              <button class="table-outside-btn black" data-bet="black">BLK</button>
+              <button class="table-outside-btn" data-bet="odd">ODD</button>
+              <button class="table-outside-btn" data-bet="high">19-36</button>
+            </div>
+            
+            <!-- Dozens row -->
+            <div class="table-dozens">
+              <button class="table-dozen" data-bet="dozen1">1st 12</button>
+              <button class="table-dozen" data-bet="dozen2">2nd 12</button>
+              <button class="table-dozen" data-bet="dozen3">3rd 12</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-bar">
+          <button id="btn-clear" class="action-btn secondary" disabled>Clear</button>
+          <button id="btn-rebet" class="action-btn secondary" disabled>Rebet</button>
+          <button id="btn-spin" class="action-btn primary" disabled>SPIN</button>
+        </div>
+
+        <!-- Instruction -->
+        <div id="instruction" class="instruction" aria-live="polite">
+          Select a chip, then tap a bet to place it.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div id="gameover-overlay" class="overlay hidden">
+    <div class="overlay-content">
+      <h2>Out of Credits</h2>
+      <p>Don't worry — it's just for fun!</p>
+      <button id="btn-reset-credits" class="overlay-btn">Start Fresh (200 Credits)</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal hidden" role="dialog" aria-labelledby="help-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="help-title">How to Play</h2>
+        <button id="close-help" class="close-btn" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <section class="help-section">
+          <h3>Getting Started</h3>
+          <ol>
+            <li>Select a chip value (1, 5, or 10)</li>
+            <li>Tap a bet tile to place chips</li>
+            <li>Tap the same bet again to add more chips</li>
+            <li>Press SPIN when ready</li>
+          </ol>
+        </section>
+        
+        <section class="help-section">
+          <h3>Bet Types & Payouts</h3>
+          <table class="paytable">
+            <tr><th>Bet</th><th>Payout</th><th>Description</th></tr>
+            <tr><td>Straight Up</td><td>35:1</td><td>Single number</td></tr>
+            <tr><td>Red / Black</td><td>1:1</td><td>Color of number</td></tr>
+            <tr><td>Even / Odd</td><td>1:1</td><td>Even or odd number</td></tr>
+            <tr><td>1-18 / 19-36</td><td>1:1</td><td>Low or high half</td></tr>
+            <tr><td>Dozens</td><td>2:1</td><td>1-12, 13-24, or 25-36</td></tr>
+            <tr><td>Columns</td><td>2:1</td><td>Vertical column</td></tr>
+          </table>
+          <p class="note">Note: Zero (0) is green and loses all even-money bets.</p>
+        </section>
+        
+        <section class="help-section">
+          <h3>🍀 Lucky Boost</h3>
+          <p>When enabled, if you lose a spin there's a small chance your bets will be returned as a "lucky break." This is purely for entertainment—no real money is involved!</p>
+        </section>
+        
+        <section class="help-section">
+          <h3>Tips</h3>
+          <ul>
+            <li>Use REBET to quickly repeat your last bet</li>
+            <li>Tap CLEAR to remove all bets</li>
+            <li>Try Table View for a classic layout</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden" role="dialog" aria-labelledby="settings-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="settings-title">Settings</h2>
+        <button id="close-settings" class="close-btn" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <label for="volume-slider">Volume</label>
+          <input type="range" id="volume-slider" min="0" max="100" value="60">
+        </div>
+        
+        <div class="setting-row">
+          <label for="lucky-boost-toggle">
+            🍀 Lucky Boost
+            <span class="setting-desc">Chance to return bets on a loss</span>
+          </label>
+          <input type="checkbox" id="lucky-boost-toggle" checked>
+        </div>
+        
+        <div class="setting-row">
+          <label for="high-contrast-toggle">
+            High Contrast
+            <span class="setting-desc">Increase visibility</span>
+          </label>
+          <input type="checkbox" id="high-contrast-toggle">
+        </div>
+        
+        <div class="setting-row">
+          <label for="reduced-motion-toggle">
+            Reduced Motion
+            <span class="setting-desc">Shorter animations</span>
+          </label>
+          <input type="checkbox" id="reduced-motion-toggle">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="roulette.js"></script>
+</body>
+</html>
