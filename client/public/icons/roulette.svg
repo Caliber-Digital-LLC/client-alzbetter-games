@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="roul-wood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#92400e"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <linearGradient id="roul-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="roul-red" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer wooden rim -->
+  <circle cx="32" cy="32" r="28" fill="url(#roul-wood)"/>
+  <circle cx="32" cy="32" r="28" stroke="#451a03" stroke-width="2"/>
+  
+  <!-- Gold trim ring -->
+  <circle cx="32" cy="32" r="25" fill="none" stroke="url(#roul-gold)" stroke-width="2"/>
+  
+  <!-- Number pockets ring -->
+  <circle cx="32" cy="32" r="22" fill="#1f2937"/>
+  
+  <!-- Colored segments (simplified) -->
+  <g transform="translate(32,32)">
+    <!-- Red segments -->
+    <path d="M0,-20 A20,20 0 0,1 10,-17.3 L5,-8.7 A10,10 0 0,0 0,-10 Z" fill="url(#roul-red)"/>
+    <path d="M17.3,-10 A20,20 0 0,1 20,0 L10,0 A10,10 0 0,0 8.7,-5 Z" fill="url(#roul-red)"/>
+    <path d="M17.3,10 A20,20 0 0,1 10,17.3 L5,8.7 A10,10 0 0,0 8.7,5 Z" fill="url(#roul-red)"/>
+    <path d="M-10,17.3 A20,20 0 0,1 -17.3,10 L-8.7,5 A10,10 0 0,0 -5,8.7 Z" fill="url(#roul-red)"/>
+    <path d="M-20,0 A20,20 0 0,1 -17.3,-10 L-8.7,-5 A10,10 0 0,0 -10,0 Z" fill="url(#roul-red)"/>
+    <path d="M-10,-17.3 A20,20 0 0,1 0,-20 L0,-10 A10,10 0 0,0 -5,-8.7 Z" fill="url(#roul-red)"/>
+    
+    <!-- Black segments -->
+    <path d="M10,-17.3 A20,20 0 0,1 17.3,-10 L8.7,-5 A10,10 0 0,0 5,-8.7 Z" fill="#111827"/>
+    <path d="M20,0 A20,20 0 0,1 17.3,10 L8.7,5 A10,10 0 0,0 10,0 Z" fill="#111827"/>
+    <path d="M10,17.3 A20,20 0 0,1 0,20 L0,10 A10,10 0 0,0 5,8.7 Z" fill="#111827"/>
+    <path d="M0,20 A20,20 0 0,1 -10,17.3 L-5,8.7 A10,10 0 0,0 0,10 Z" fill="#111827"/>
+    <path d="M-17.3,10 A20,20 0 0,1 -20,0 L-10,0 A10,10 0 0,0 -8.7,5 Z" fill="#111827"/>
+    <path d="M-17.3,-10 A20,20 0 0,1 -10,-17.3 L-5,-8.7 A10,10 0 0,0 -8.7,-5 Z" fill="#111827"/>
+    
+    <!-- Green zero -->
+    <circle cx="0" cy="-15" r="3" fill="#22c55e"/>
+  </g>
+  
+  <!-- Inner gold ring -->
+  <circle cx="32" cy="32" r="10" fill="none" stroke="url(#roul-gold)" stroke-width="1.5"/>
+  
+  <!-- Center hub -->
+  <circle cx="32" cy="32" r="7" fill="url(#roul-gold)"/>
+  <circle cx="32" cy="32" r="4" fill="#78350f"/>
+  
+  <!-- Spinning indicator lines -->
+  <g transform="translate(32,32)" stroke="url(#roul-gold)" stroke-width="1">
+    <line x1="0" y1="-7" x2="0" y2="-4"/>
+    <line x1="7" y1="0" x2="4" y2="0"/>
+    <line x1="0" y1="7" x2="0" y2="4"/>
+    <line x1="-7" y1="0" x2="-4" y2="0"/>
+  </g>
+  
+  <!-- Ball -->
+  <circle cx="44" cy="20" r="3" fill="#e5e7eb"/>
+  <circle cx="43" cy="19" r="1" fill="#ffffff"/>
+</svg>

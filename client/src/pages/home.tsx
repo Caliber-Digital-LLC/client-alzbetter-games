@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import GameIcon from "@/components/GameIcon";
 
 interface Game {
   id: string;
@@ -8,7 +7,7 @@ interface Game {
   description: string;
   path: string;
   external: boolean;
-  icon: string;
+  iconSvg?: string;
   gradient: [string, string];
   order: number;
 }
@@ -45,25 +44,28 @@ export default function Home() {
   const GameCard = ({ game }: { game: Game }) => {
     const content = (
       <div 
-        className="relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group h-32"
+        className="relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group"
         style={{
           background: `linear-gradient(135deg, ${game.gradient[0]} 0%, ${game.gradient[1]} 100%)`
         }}
       >
-        {/* Icon on the right */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30 group-hover:opacity-50 transition-opacity">
-          <GameIcon icon={game.icon} className="w-24 h-24" />
-        </div>
+        {/* SVG Icon */}
+        {game.iconSvg && (
+          <img 
+            src={game.iconSvg} 
+            alt="" 
+            aria-hidden="true"
+            className="absolute right-4 top-4 w-16 h-16 drop-shadow-lg"
+          />
+        )}
         
         {/* Content */}
-        <div className="relative z-10 p-5 h-full flex flex-col justify-center">
+        <div className="relative z-10 p-5 pr-24">
           <h3 className="text-2xl font-bold text-white mb-1">{game.title}</h3>
-          <p className="text-white/80 text-sm">{game.description}</p>
-        </div>
-        
-        {/* Play indicator */}
-        <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className="text-white text-2xl">›</span>
+          <p className="text-white/80 text-sm mb-4">{game.description}</p>
+          <span className="inline-block px-4 py-2 bg-white/20 border-2 border-white/50 rounded-lg text-white font-semibold text-sm hover:bg-white/30 transition-colors">
+            Play Now →
+          </span>
         </div>
       </div>
     );

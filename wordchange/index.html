@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#2d3748">
+    
+    <title>Word Change</title>
+    
+    <!-- 
+    ============================================================================
+    TUNING SECTION
+    ============================================================================
+    
+    GAME CONFIGURATION (in game.js CONFIG object):
+    - POINTS_PER_WORD: 100          - Base points per correct answer
+    - BONUS_TIME_THRESHOLD: 10      - Seconds remaining to earn time bonus
+    - BONUS_POINTS: 50              - Bonus points for quick answers
+    - DEFAULT_TIMER_SECONDS: 60     - Countdown timer duration
+    - INITIAL_HINTS: 5              - Starting hint count
+    - INITIAL_REVEALS: 3            - Starting reveal count  
+    - INITIAL_REROLLS: 5            - Starting reroll/skip count
+    - POWERUP_REPLENISH_EVERY: 5    - Words completed to earn +1 powerup
+    
+    WORD CATEGORIES (in words.js CATEGORIES object):
+    Each category has:
+    - name: Display name
+    - description: Shown in category picker
+    - words: Array of seed words
+    
+    STYLING (in styles.css :root section):
+    - --tile-size: clamp(48px, 12vw, 80px)    - Word tile size
+    - --tile-font-size: clamp(24px, 6vw, 36px) - Tile letter size
+    - --key-height: clamp(40px, 10vw, 56px)    - Keyboard key height
+    - --key-font-size: clamp(16px, 4vw, 22px)  - Key letter size
+    - --powerup-size: clamp(44px, 11vw, 60px)  - Powerup button size
+    - --spacing-sm/md/lg/xl: Various spacing values
+    
+    COLOR VARIABLES:
+    - --bg-primary: #2d3748       - Main background
+    - --bg-secondary: #4a5568     - Secondary background
+    - --text-primary: #f7fafc     - Main text color
+    - --text-secondary: #a0aec0   - Muted text
+    - --accent-primary: #4299e1   - Blue accent
+    - --accent-success: #48bb78   - Green for success
+    - --accent-warning: #ed8936   - Orange for warnings
+    - --accent-hint: #9f7aea      - Purple for hints
+    
+    HIGH CONTRAST MODE:
+    Colors automatically adjust when .high-contrast class is on body
+    
+    ============================================================================
+    -->
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sound Permission Prompt (iOS Safari requirement) -->
+    <div id="sound-prompt" class="sound-prompt hidden">
+        <span>🔊</span> Tap to enable sounds
+    </div>
+    
+    <!-- Reveal Preview (shows briefly when using reveal powerup) -->
+    <div id="reveal-preview" class="reveal-preview"></div>
+    
+    <!-- ===== START SCREEN ===== -->
+    <div id="start-screen" class="screen start-screen">
+        <div class="start-content">
+            <h1 class="game-title">Word Change</h1>
+            <p class="game-subtitle">Change one letter to make a new word</p>
+            
+            <div class="start-buttons">
+                <button id="quick-play-btn" class="btn btn-primary btn-large">
+                    ▶ Quick Play
+                </button>
+                <button id="choose-category-btn" class="btn btn-secondary">
+                    📚 Choose Category
+                </button>
+                <button id="how-to-play-btn" class="btn btn-outline">
+                    ❓ How to Play
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== GAME SCREEN ===== -->
+    <div id="game-screen" class="screen game-screen" style="display: none;">
+        
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="stats-row">
+                <div class="stat">
+                    <span class="stat-label">Score</span>
+                    <span id="score-value" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Words</span>
+                    <span id="words-value" class="stat-value">0</span>
+                </div>
+                <div id="timer-stat" class="stat" style="display: none;">
+                    <span class="stat-label">Time</span>
+                    <span id="timer-value" class="stat-value">1:00</span>
+                </div>
+            </div>
+            <div class="top-bar-buttons">
+                <button id="settings-btn" class="btn-icon" aria-label="Settings">⚙️</button>
+                <button id="help-btn" class="btn-icon" aria-label="Help">❓</button>
+                <button id="menu-btn" class="btn-icon" aria-label="Menu">🏠</button>
+            </div>
+        </header>
+        
+        <!-- Category Badge -->
+        <div class="category-row">
+            <span id="category-badge" class="category-badge">Easy 3-Letter</span>
+        </div>
+        
+        <!-- Word Area -->
+        <main class="word-area">
+            <p id="instruction-text" class="instruction-text">
+                Tap a letter, then tap a tile to replace
+            </p>
+            
+            <div id="word-row" class="word-row">
+                <!-- Word tiles rendered dynamically -->
+            </div>
+        </main>
+        
+        <!-- Powerups -->
+        <div class="powerup-row">
+            <button id="hint-btn" class="powerup-btn" aria-label="Hint">
+                <span class="powerup-icon">💡</span>
+                <span id="hint-count" class="powerup-count">5</span>
+                <span class="powerup-label">Hint</span>
+            </button>
+            <button id="reveal-btn" class="powerup-btn" aria-label="Reveal">
+                <span class="powerup-icon">👁️</span>
+                <span id="reveal-count" class="powerup-count">3</span>
+                <span class="powerup-label">Reveal</span>
+            </button>
+            <button id="reroll-btn" class="powerup-btn" aria-label="Skip">
+                <span class="powerup-icon">🔄</span>
+                <span id="reroll-count" class="powerup-count">5</span>
+                <span class="powerup-label">Skip</span>
+            </button>
+        </div>
+        
+        <!-- Keyboard -->
+        <div id="keyboard" class="keyboard">
+            <!-- Keyboard rows rendered dynamically -->
+        </div>
+    </div>
+    
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close">✕</button>
+            <h2 class="modal-title">Settings</h2>
+            
+            <div class="settings-list">
+                <div class="setting-item">
+                    <span class="setting-label">Timer Mode</span>
+                    <button id="toggle-timer" class="toggle-btn">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Sound Effects</span>
+                    <button id="toggle-sound" class="toggle-btn active">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item setting-volume">
+                    <span class="setting-label">Volume</span>
+                    <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="60">
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Tap Mode (vs Drag)</span>
+                    <button id="toggle-tap" class="toggle-btn active">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">High Contrast</span>
+                    <button id="toggle-contrast" class="toggle-btn">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Reduce Motion</span>
+                    <button id="toggle-motion" class="toggle-btn">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== HELP MODAL ===== -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-content modal-help">
+            <button class="modal-close" aria-label="Close">✕</button>
+            <h2 class="modal-title">How to Play</h2>
+            
+            <div class="help-pages">
+                <!-- Page 1 -->
+                <div class="help-page active">
+                    <div class="help-illustration">
+                        <div class="demo-word">
+                            <span class="demo-tile">C</span>
+                            <span class="demo-tile highlight">A</span>
+                            <span class="demo-tile">T</span>
+                        </div>
+                        <div class="demo-arrow">↓</div>
+                        <div class="demo-word">
+                            <span class="demo-tile">C</span>
+                            <span class="demo-tile success">O</span>
+                            <span class="demo-tile">T</span>
+                        </div>
+                    </div>
+                    <p class="help-text">
+                        <strong>Change one letter</strong> to form a new word.
+                        <br><br>
+                        In this example, changing <strong>A</strong> to <strong>O</strong> 
+                        turns CAT into COT.
+                    </p>
+                </div>
+                
+                <!-- Page 2 -->
+                <div class="help-page">
+                    <div class="help-illustration">
+                        <div class="demo-input">
+                            <span class="demo-key selected">O</span>
+                            <span class="demo-plus">+</span>
+                            <span class="demo-tile target">A</span>
+                        </div>
+                    </div>
+                    <p class="help-text">
+                        <strong>Tap mode:</strong> Tap a letter on the keyboard, 
+                        then tap the tile you want to replace.
+                        <br><br>
+                        <strong>Drag mode:</strong> Drag a letter from the keyboard 
+                        and drop it on a tile.
+                    </p>
+                </div>
+                
+                <!-- Page 3 -->
+                <div class="help-page">
+                    <div class="help-illustration">
+                        <div class="demo-powerups">
+                            <div class="demo-powerup">💡<br><small>Hint</small></div>
+                            <div class="demo-powerup">👁️<br><small>Reveal</small></div>
+                            <div class="demo-powerup">🔄<br><small>Skip</small></div>
+                        </div>
+                    </div>
+                    <p class="help-text">
+                        <strong>Powerups help when you're stuck:</strong>
+                        <br><br>
+                        <strong>💡 Hint</strong> - Highlights the position to change
+                        <br>
+                        <strong>👁️ Reveal</strong> - Shows one possible answer briefly
+                        <br>
+                        <strong>🔄 Skip</strong> - Skip to a new word
+                    </p>
+                </div>
+            </div>
+            
+            <div class="help-nav">
+                <button id="help-prev" class="btn btn-outline" disabled>Back</button>
+                <div class="page-dots">
+                    <span class="page-dot active"></span>
+                    <span class="page-dot"></span>
+                    <span class="page-dot"></span>
+                </div>
+                <button id="help-next" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== CATEGORY MODAL ===== -->
+    <div id="category-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close">✕</button>
+            <h2 class="modal-title">Choose Category</h2>
+            
+            <div class="category-grid">
+                <button class="category-btn selected" data-category="easy3">
+                    <span class="category-icon">🔤</span>
+                    <span class="category-name">Easy 3-Letter</span>
+                    <span class="category-desc">Short words for beginners</span>
+                </button>
+                
+                <button class="category-btn" data-category="easy4">
+                    <span class="category-icon">📝</span>
+                    <span class="category-name">Easy 4-Letter</span>
+                    <span class="category-desc">Common 4-letter words</span>
+                </button>
+                
+                <button class="category-btn" data-category="animals">
+                    <span class="category-icon">🐾</span>
+                    <span class="category-name">Animals</span>
+                    <span class="category-desc">Pets and wildlife</span>
+                </button>
+                
+                <button class="category-btn" data-category="food">
+                    <span class="category-icon">🍎</span>
+                    <span class="category-name">Food</span>
+                    <span class="category-desc">Kitchen and meals</span>
+                </button>
+                
+                <button class="category-btn" data-category="veterans">
+                    <span class="category-icon">⭐</span>
+                    <span class="category-name">Veterans</span>
+                    <span class="category-desc">Military and service</span>
+                </button>
+                
+                <button class="category-btn" data-category="general">
+                    <span class="category-icon">📚</span>
+                    <span class="category-name">General</span>
+                    <span class="category-desc">Mixed vocabulary</span>
+                </button>
+            </div>
+            
+            <button id="start-category-btn" class="btn btn-primary btn-large">
+                Start Game
+            </button>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="words.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

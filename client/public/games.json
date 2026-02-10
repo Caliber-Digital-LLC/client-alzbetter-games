@@ -1,50 +1,26 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "lastUpdated": "2026-02-10T00:00:00Z",
   "games": [
     {
-      "id": "blackjack",
-      "title": "Blackjack",
-      "description": "Beat the dealer to 21!",
-      "path": "/blackjack",
+      "id": "slots",
+      "title": "Slots",
+      "description": "A relaxing slot machine game with smooth animations.",
+      "path": "/slots",
       "external": false,
-      "icon": "cards",
-      "gradient": ["#059669", "#047857"],
-      "image": "/img/blackjack.png",
+      "iconSvg": "/icons/slots.svg",
+      "gradient": ["#7b2d8e", "#5c2d91"],
       "order": 1
     },
     {
-      "id": "slots",
-      "title": "Slots",
-      "description": "Spin to win with smooth animations.",
-      "path": "/slots",
+      "id": "blackjack",
+      "title": "Blackjack",
+      "description": "Friendly casino classic. Beat the dealer to 21!",
+      "path": "/blackjack",
       "external": false,
-      "icon": "slot-machine",
-      "gradient": ["#7b2d8e", "#5c2d91"],
-      "image": "/img/slots.png",
+      "iconSvg": "/icons/blackjack.svg",
+      "gradient": ["#059669", "#047857"],
       "order": 2
-    },
-    {
-      "id": "poker",
-      "title": "Video Poker",
-      "description": "Jacks or Better video poker.",
-      "path": "/poker/",
-      "external": true,
-      "icon": "poker",
-      "gradient": ["#6b18a0", "#4a1070"],
-      "image": "/img/poker.png",
-      "order": 3
-    },
-    {
-      "id": "craps",
-      "title": "Craps",
-      "description": "Roll the dice in this casino classic.",
-      "path": "/craps/",
-      "external": true,
-      "icon": "dice",
-      "gradient": ["#d97706", "#b45309"],
-      "image": "/img/craps.png",
-      "order": 4
     },
     {
       "id": "roulette",
@@ -52,10 +28,39 @@
       "description": "Spin the wheel and test your luck!",
       "path": "/roulette/",
       "external": true,
-      "icon": "roulette",
+      "iconSvg": "/icons/roulette.svg",
       "gradient": ["#dc2626", "#991b1b"],
-      "image": "/img/roulette.png",
+      "order": 3
+    },
+    {
+      "id": "poker",
+      "title": "Video Poker",
+      "description": "Jacks or Better with Lucky Boost feature.",
+      "path": "/poker/",
+      "external": true,
+      "iconSvg": "/icons/poker.svg",
+      "gradient": ["#6b18a0", "#4a1070"],
+      "order": 4
+    },
+    {
+      "id": "craps",
+      "title": "Craps",
+      "description": "Roll the dice in this classic casino game.",
+      "path": "/craps/",
+      "external": true,
+      "iconSvg": "/icons/craps.svg",
+      "gradient": ["#d97706", "#b45309"],
       "order": 5
+    },
+    {
+      "id": "wordchange",
+      "title": "Word Change",
+      "description": "Change one letter to make a new word!",
+      "path": "/wordchange/",
+      "external": true,
+      "iconSvg": "/icons/wordchange.svg",
+      "gradient": ["#6366f1", "#4f46e5"],
+      "order": 6
     }
   ]
 }

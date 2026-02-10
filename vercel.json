@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx vite build && cp -r craps dist/public/ && cp -r poker dist/public/ && cp -r roulette dist/public/",
+  "buildCommand": "npx vite build && cp -r craps dist/public/ && cp -r poker dist/public/ && cp -r roulette dist/public/ && cp -r wordchange dist/public/",
   "outputDirectory": "dist/public",
   "framework": "vite",
   "rewrites": [
