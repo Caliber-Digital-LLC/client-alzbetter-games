@@ -1,0 +1,590 @@
+/**
+ * Lucky Slots - Game Styles
+ * Uses shared casino-theme.css and casino-components.css
+ */
+
+/* ============================================================================
+   GAME LAYOUT - No scrolling, fits viewport
+   ============================================================================ */
+html, body {
+    overflow: hidden;
+    height: 100%;
+}
+
+.game-container {
+    background: var(--felt-gradient);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 2vh, 16px);
+    padding: clamp(8px, 2vmin, 16px);
+    min-height: 0;
+}
+
+.slot-machine-wrapper {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 2vw, 24px);
+}
+
+/* ============================================================================
+   SLOT CABINET
+   ============================================================================ */
+.slot-cabinet {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 3px solid var(--accent-gold);
+    border-radius: var(--radius-xl);
+    padding: clamp(8px, 2vmin, 16px);
+    box-shadow: 
+        var(--shadow-medium),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================================
+   REELS - Viewport-responsive sizing
+   ============================================================================ */
+.reels-container {
+    display: flex;
+    gap: clamp(4px, 1vmin, 12px);
+    justify-content: center;
+}
+
+.reel {
+    --symbol-size: clamp(65px, min(18vw, 15vh), 130px);
+    --reel-height: calc(var(--symbol-size) * 3 + clamp(4px, 1vmin, 8px) * 2);
+    
+    position: relative;
+    width: calc(var(--symbol-size) + clamp(8px, 2vmin, 16px));
+    height: var(--reel-height);
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 2px solid rgba(212, 168, 83, 0.5);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.reel-strip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(2px, 0.5vmin, 6px);
+    padding: clamp(4px, 1vmin, 8px);
+    transition: transform 0.3s ease;
+}
+
+.reel.spinning .reel-strip {
+    animation: reel-spin 0.1s linear infinite;
+}
+
+.reel.stopping .reel-strip {
+    animation: reel-stop 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes reel-spin {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(calc(-1 * var(--symbol-size) - var(--space-xs))); }
+}
+
+@keyframes reel-stop {
+    0% { transform: translateY(calc(-5 * var(--symbol-size))); }
+    100% { transform: translateY(0); }
+}
+
+.symbol {
+    width: var(--symbol-size);
+    height: var(--symbol-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.symbol svg {
+    width: 85%;
+    height: 85%;
+}
+
+.symbol.dimmed {
+    opacity: 0.5;
+    transform: scale(0.9);
+}
+
+/* Reel center highlight */
+.reel-highlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(var(--symbol-size) + var(--space-sm));
+    border-top: 2px solid rgba(212, 168, 83, 0.6);
+    border-bottom: 2px solid rgba(212, 168, 83, 0.6);
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Fade masks */
+.reel-mask {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 25%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.reel-mask.top {
+    top: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, transparent 100%);
+}
+
+.reel-mask.bottom {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(15, 23, 42, 0.9) 0%, transparent 100%);
+}
+
+/* ============================================================================
+   PAYLINE INDICATOR
+   ============================================================================ */
+.payline-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+}
+
+.payline-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(212, 168, 83, 0.6);
+}
+
+.payline-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+/* ============================================================================
+   LEVER - Viewport-responsive
+   ============================================================================ */
+.lever {
+    position: relative;
+    width: clamp(60px, 12vmin, 90px);
+    height: clamp(160px, 32vh, 280px);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.lever:disabled {
+    cursor: not-allowed;
+}
+
+.lever-track {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 20%;
+    bottom: 20%;
+    width: clamp(18px, 4vmin, 28px);
+    background: linear-gradient(180deg, #475569 0%, #334155 100%);
+    border-radius: 10px;
+    border: 2px solid #64748b;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.lever-arm {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 5%;
+    height: 40%;
+    transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lever:not(:disabled):hover .lever-arm {
+    top: 10%;
+}
+
+.lever:not(:disabled):active .lever-arm,
+.lever.pulled .lever-arm {
+    top: 55%;
+}
+
+.lever-shaft {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 60%;
+    bottom: 0;
+    width: clamp(12px, 3vmin, 18px);
+    background: linear-gradient(90deg, #94a3b8 0%, #64748b 50%, #94a3b8 100%);
+    border-radius: 6px;
+    border: 1px solid #94a3b8;
+}
+
+.lever-ball {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    width: clamp(48px, 10vmin, 72px);
+    height: clamp(48px, 10vmin, 72px);
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+    border-radius: 50%;
+    border: 4px solid #f87171;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.lever:not(:disabled):hover .lever-ball {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+}
+
+.lever-shine {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    filter: blur(2px);
+}
+
+.lever-base {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20%;
+    background: linear-gradient(0deg, #475569 0%, #64748b 100%);
+    border-radius: 0 0 clamp(8px, 2vmin, 16px) clamp(8px, 2vmin, 16px);
+    border: 2px solid #64748b;
+    border-top: none;
+}
+
+/* ============================================================================
+   SLOT CONTROLS - Below cabinet, fills width
+   ============================================================================ */
+.slot-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 3vw, 24px);
+    padding: clamp(8px, 2vmin, 16px);
+    width: 100%;
+    max-width: calc(var(--symbol-size, 100px) * 3 + 100px + 16vmin);
+}
+
+.slot-controls .bet-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: var(--bg-card);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    flex: 1;
+    justify-content: center;
+}
+
+.slot-controls .spin-btn {
+    flex: 1.5;
+    min-width: unset;
+    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-lg);
+    font-size: clamp(1rem, 3vmin, 1.25rem);
+}
+
+/* Larger bet option buttons */
+.slot-controls .bet-option {
+    width: clamp(48px, 10vmin, 60px);
+    height: clamp(48px, 10vmin, 60px);
+    font-size: clamp(1rem, 3vmin, 1.25rem);
+}
+
+/* ============================================================================
+   BET CONTROLS (deprecated - using slot-controls)
+   ============================================================================ */
+.bet-controls {
+    display: none;
+}
+
+/* Hide shared action-bar - we use slot-controls instead */
+.action-bar {
+    display: none;
+}
+
+.bet-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ============================================================================
+   WIN STYLES
+   ============================================================================ */
+.win-amount {
+    color: var(--accent-green);
+}
+
+.win-amount.animating {
+    animation: pulse-gold 0.5s ease;
+}
+
+@keyframes pulse-gold {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); color: var(--accent-gold); }
+}
+
+/* Win glow on cabinet */
+.slot-cabinet.winning {
+    box-shadow: 
+        var(--shadow-medium),
+        0 0 40px rgba(212, 168, 83, 0.4);
+    animation: cabinet-glow 0.5s ease;
+}
+
+@keyframes cabinet-glow {
+    0%, 100% { box-shadow: var(--shadow-medium), 0 0 20px rgba(212, 168, 83, 0.2); }
+    50% { box-shadow: var(--shadow-medium), 0 0 60px rgba(212, 168, 83, 0.6); }
+}
+
+/* ============================================================================
+   JACKPOT OVERLAY
+   ============================================================================ */
+.jackpot-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    cursor: pointer;
+}
+
+.jackpot-overlay.hidden {
+    display: none;
+}
+
+.jackpot-content {
+    text-align: center;
+    z-index: 10;
+    animation: jackpot-bounce 0.6s ease infinite;
+}
+
+@keyframes jackpot-bounce {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.05); }
+}
+
+.jackpot-title {
+    font-size: clamp(2.5rem, 10vw, 5rem);
+    font-weight: 700;
+    background: linear-gradient(90deg, #fde047, #f59e0b, #fde047);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 20px rgba(245, 158, 11, 0.5);
+    margin-bottom: var(--space-md);
+}
+
+.jackpot-amount {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.jackpot-hint {
+    font-size: var(--font-size-md);
+    color: #fde68a;
+    margin-top: var(--space-lg);
+}
+
+.confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* ============================================================================
+   SPIN BUTTON
+   ============================================================================ */
+.spin-btn {
+    gap: var(--space-sm);
+}
+
+.spin-btn .spin-icon {
+    width: clamp(18px, 4vmin, 24px);
+    height: clamp(18px, 4vmin, 24px);
+}
+
+.spin-btn.spinning .spin-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   PAYTABLE STYLES
+   ============================================================================ */
+.payout-info {
+    font-size: var(--font-size-sm);
+    color: #6b7280;
+    margin-bottom: var(--space-md);
+}
+
+.paytable {
+    background: transparent;
+    margin-bottom: var(--space-lg);
+}
+
+.paytable-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid rgba(212, 168, 83, 0.2);
+}
+
+.paytable-row:last-child {
+    border-bottom: none;
+}
+
+.paytable-row.jackpot-row {
+    background: rgba(212, 168, 83, 0.1);
+    margin: 0 calc(-1 * var(--space-lg));
+    padding: var(--space-sm) var(--space-lg);
+}
+
+.paytable-hand {
+    font-size: var(--font-size-sm);
+    color: var(--modal-text);
+}
+
+.jackpot-tag {
+    font-size: var(--font-size-xs);
+    color: #fde047;
+    margin-left: var(--space-xs);
+}
+
+.paytable-payout {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--accent-gold-dark);
+}
+
+/* ============================================================================
+   RESPONSIVE - Desktop larger scaling
+   ============================================================================ */
+@media (min-width: 768px) and (min-height: 600px) {
+    .reel {
+        --symbol-size: clamp(90px, 15vh, 140px);
+    }
+    
+    .slot-controls {
+        max-width: calc(140px * 3 + 120px + 18vmin);
+    }
+}
+
+@media (min-width: 1024px) and (min-height: 700px) {
+    .reel {
+        --symbol-size: clamp(100px, 16vh, 160px);
+    }
+    
+    .slot-controls .spin-btn {
+        font-size: var(--font-size-lg);
+        padding: var(--space-md) var(--space-xl);
+    }
+    
+    .slot-controls .bet-selector {
+        padding: var(--space-sm) var(--space-xl);
+    }
+    
+    .slot-controls {
+        max-width: calc(160px * 3 + 130px + 20vmin);
+    }
+}
+
+/* Landscape phones - compact */
+@media (orientation: landscape) and (max-height: 500px) {
+    .game-area {
+        padding: 4px;
+        gap: 4px;
+    }
+    
+    .reel {
+        --symbol-size: min(14vw, 60px);
+    }
+    
+    .lever {
+        height: clamp(100px, 20vh, 150px);
+    }
+    
+    .stats-bar {
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .instruction {
+        padding: var(--space-xs) var(--space-md);
+        min-height: 28px;
+        font-size: var(--font-size-xs);
+    }
+    
+    .slot-controls {
+        padding: 4px;
+        gap: 8px;
+    }
+}
+
+/* Very small screens */
+@media (max-height: 600px) {
+    .header {
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .stats-bar {
+        padding: var(--space-xs) var(--space-md);
+    }
+    
+    .instruction {
+        min-height: 32px;
+        padding: var(--space-xs) var(--space-md);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .reel.spinning .reel-strip,
+    .reel.stopping .reel-strip {
+        animation: none;
+    }
+    
+    .jackpot-content {
+        animation: none;
+    }
+    
+    .spin-btn.spinning .spin-icon {
+        animation: none;
+    }
+}

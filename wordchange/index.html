@@ -49,20 +49,13 @@
     - --accent-warning: #ed8936   - Orange for warnings
     - --accent-hint: #9f7aea      - Purple for hints
     
-    HIGH CONTRAST MODE:
-    Colors automatically adjust when .high-contrast class is on body
-    
     ============================================================================
     -->
     
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../shared/help-modal.css">
 </head>
 <body>
-    <!-- Sound Permission Prompt (iOS Safari requirement) -->
-    <div id="sound-prompt" class="sound-prompt hidden">
-        <span>🔊</span> Tap to enable sounds
-    </div>
-    
     <!-- Reveal Preview (shows briefly when using reveal powerup) -->
     <div id="reveal-preview" class="reveal-preview"></div>
     
@@ -182,13 +175,6 @@
                 <div class="setting-item">
                     <span class="setting-label">Tap Mode (vs Drag)</span>
                     <button id="toggle-tap" class="toggle-btn active">
-                        <span class="toggle-track"></span>
-                    </button>
-                </div>
-                
-                <div class="setting-item">
-                    <span class="setting-label">High Contrast</span>
-                    <button id="toggle-contrast" class="toggle-btn">
                         <span class="toggle-track"></span>
                     </button>
                 </div>

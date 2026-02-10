@@ -1,12 +1,12 @@
 # AlzBetter Games
 
-A collection of fun, relaxing HTML5 games designed for seniors.
+A collection of fun, relaxing HTML5 games designed for everyone.
 
 ## 🎮 Available Games
 
 | Game | Route | Description |
 |------|-------|-------------|
-| **Calm Vegas Slots** | `/slots` | A soothing slot machine game with beautiful animations |
+| **Vegas Slots** | `/slots` | A soothing slot machine game with beautiful animations |
 
 ## 🚀 Development
 

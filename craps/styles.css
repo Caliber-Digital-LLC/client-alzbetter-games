@@ -68,17 +68,6 @@
   --transition-slow: 400ms ease;
 }
 
-/* High Contrast Theme */
-.high-contrast {
-  --felt-color: #0a2a20;
-  --felt-dark: #000;
-  --text-primary: #fff;
-  --text-secondary: #fff;
-  --accent-gold: #ffd700;
-  --accent-green: #00ff00;
-  --accent-red: #ff0000;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════════
    RESET & BASE
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -145,17 +134,37 @@ input[type="range"] {
 
 .header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: var(--space-sm) var(--space-md);
   background: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
-.header-left, .header-right {
+.header-title {
+  font-size: clamp(1.1rem, 4vw, 1.5rem);
+  font-weight: 700;
+  color: var(--accent-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 8px;
+}
+
+.title-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.header-actions {
+  position: absolute;
+  right: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .title {

@@ -23,9 +23,8 @@ const CONFIG = {
   DICE_ANIMATION_MS: 400,  // dice shake duration
   RESULT_DELAY_MS: 800,    // delay before showing result
   
-  // Lucky Boost (player favor mechanic)
-  LUCKY_BOOST_ENABLED: true,
-  LUCKY_BOOST_FREQUENCY: 12,  // 1 in N chance to trigger on a loss
+  // Player favor (65% chance to push on loss)
+  PLAYER_FAVOR_RATE: 0.65,
   
   // History
   MAX_HISTORY: 6,
@@ -68,14 +67,8 @@ const game = {
   // Settings
   soundEnabled: true,
   audioUnlocked: false,
-  luckyBoostEnabled: true, // Always enabled for player enjoyment
   reducedMotion: false,
-  highContrast: false,
   volume: 0.6,
-  
-  // Roll counter for lucky boost
-  rollCount: 0,
-  luckyBoostRoll: 0,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -92,16 +85,11 @@ function rollDice() {
   return [rollDie(), rollDie()];
 }
 
-// Generate lucky boost trigger roll (1 in FREQUENCY chance)
-function generateLuckyBoostRoll() {
+// Player favor: 65% chance to push on loss
+function shouldTriggerPlayerFavor() {
   const array = new Uint32Array(1);
   window.crypto.getRandomValues(array);
-  game.luckyBoostRoll = game.rollCount + 1 + (array[0] % (CONFIG.LUCKY_BOOST_FREQUENCY * 2));
-}
-
-function shouldTriggerLuckyBoost() {
-  if (!game.luckyBoostEnabled) return false;
-  return game.rollCount >= game.luckyBoostRoll;
+  return (array[0] / 0xFFFFFFFF) < CONFIG.PLAYER_FAVOR_RATE;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -295,9 +283,7 @@ const AudioManager = {
     osc.start();
     osc.stop(this.ctx.currentTime + 0.2);
   },
-  
-  // Lucky boost sound - magical chime
-  playLuckyBoost() {
+};
     if (!game.soundEnabled || !this.ctx) return;
     
     const notes = [880, 1174.66, 1396.91]; // A5, D6, F6
@@ -386,8 +372,6 @@ const UI = {
       
       // Settings
       volumeSlider: document.getElementById('volume-slider'),
-      luckyBoostToggle: document.getElementById('lucky-boost-toggle'),
-      highContrastToggle: document.getElementById('high-contrast-toggle'),
       reducedMotionToggle: document.getElementById('reduced-motion-toggle'),
     };
   },
@@ -547,12 +531,11 @@ const UI = {
       bigwin: '🏆',
       lose: '😔',
       push: '🤝',
-      lucky: '🍀',
     };
     
     this.els.resultIcon.textContent = icons[type] || '🎲';
     this.els.resultTitle.textContent = title;
-    this.els.resultTitle.className = 'result-title ' + (type === 'win' || type === 'bigwin' || type === 'lucky' ? 'win' : type === 'lose' ? 'lose' : 'push');
+    this.els.resultTitle.className = 'result-title ' + (type === 'win' || type === 'bigwin' ? 'win' : type === 'lose' ? 'lose' : 'push');
     this.els.resultMessage.textContent = message;
     this.els.resultPayout.textContent = payout || '';
     this.els.resultOverlay.classList.remove('hidden');
@@ -565,8 +548,6 @@ const UI = {
       AudioManager.playWin();
     } else if (type === 'lose') {
       AudioManager.playLoss();
-    } else if (type === 'lucky') {
-      AudioManager.playLuckyBoost();
     } else {
       AudioManager.playPush();
     }
@@ -646,15 +627,10 @@ const UI = {
   
   applySettings() {
     // High contrast
-    document.body.classList.toggle('high-contrast', game.highContrast);
-    this.els.highContrastToggle.checked = game.highContrast;
-    
+  applySettings() {
     // Reduced motion
     document.body.classList.toggle('reduce-motion', game.reducedMotion);
     this.els.reducedMotionToggle.checked = game.reducedMotion;
-    
-    // Lucky boost
-    this.els.luckyBoostToggle.checked = game.luckyBoostEnabled;
     
     // Volume
     this.els.volumeSlider.value = game.volume * 100;
@@ -760,7 +736,6 @@ function performRoll() {
   if (!canRoll()) return;
   
   game.state = GameState.ROLLING;
-  game.rollCount++;
   
   UI.setRollButtonEnabled(false);
   UI.lockBets(true, true);
@@ -791,7 +766,7 @@ function resolveRoll(total) {
   let resultType = 'push';
   let resultTitle = '';
   let resultMessage = '';
-  let triggerLuckyBoost = false;
+  let triggerPush = false;
   
   // ─── Resolve Field bet (one-roll) ───
   if (game.bets.field > 0) {
@@ -842,19 +817,18 @@ function resolveRoll(total) {
     else if (total === 2 || total === 3 || total === 12) {
       // Pass loses
       if (game.bets.pass > 0) {
-        // Check for lucky boost
-        if (shouldTriggerLuckyBoost()) {
-          triggerLuckyBoost = true;
+        // Check for player favor (65% chance to push on loss)
+        if (shouldTriggerPlayerFavor()) {
+          triggerPush = true;
           game.credits += game.bets.pass; // Return bet
-          results.push({ bet: 'Pass Line', result: 'lucky', payout: 0 });
-          generateLuckyBoostRoll();
+          results.push({ bet: 'Pass Line', result: 'push', payout: 0 });
         } else {
           results.push({ bet: 'Pass Line', result: 'lose', payout: -game.bets.pass });
         }
         showResult = true;
-        resultType = triggerLuckyBoost ? 'lucky' : 'lose';
+        resultType = triggerPush ? 'push' : 'lose';
         resultTitle = 'Craps!';
-        resultMessage = triggerLuckyBoost ? 'Lucky break! Bet returned.' : 'Pass Line loses.';
+        resultMessage = triggerPush ? 'Push! Bet returned.' : 'Pass Line loses.';
       }
       // Don't Pass: 2 or 3 wins, 12 is push
       if (game.bets.dontPass > 0) {
@@ -914,20 +888,19 @@ function resolveRoll(total) {
         resultMessage = 'Pass Line wins!';
       }
       if (game.bets.dontPass > 0) {
-        // Check for lucky boost
-        if (shouldTriggerLuckyBoost()) {
-          triggerLuckyBoost = true;
+        // Check for player favor (65% chance to push on loss)
+        if (shouldTriggerPlayerFavor()) {
+          triggerPush = true;
           game.credits += game.bets.dontPass;
-          results.push({ bet: "Don't Pass", result: 'lucky', payout: 0 });
-          generateLuckyBoostRoll();
+          results.push({ bet: "Don't Pass", result: 'push', payout: 0 });
         } else {
           results.push({ bet: "Don't Pass", result: 'lose', payout: -game.bets.dontPass });
         }
         if (!showResult) {
           showResult = true;
-          resultType = triggerLuckyBoost ? 'lucky' : 'lose';
+          resultType = triggerPush ? 'push' : 'lose';
           resultTitle = `Hit the ${game.point}!`;
-          resultMessage = triggerLuckyBoost ? 'Lucky break! Bet returned.' : "Don't Pass loses.";
+          resultMessage = triggerPush ? 'Push! Bet returned.' : "Don't Pass loses.";
         }
       }
       
@@ -950,20 +923,19 @@ function resolveRoll(total) {
         resultMessage = "Don't Pass wins!";
       }
       if (game.bets.pass > 0) {
-        // Check for lucky boost
-        if (shouldTriggerLuckyBoost()) {
-          triggerLuckyBoost = true;
+        // Check for player favor (65% chance to push on loss)
+        if (shouldTriggerPlayerFavor()) {
+          triggerPush = true;
           game.credits += game.bets.pass;
-          results.push({ bet: 'Pass Line', result: 'lucky', payout: 0 });
-          generateLuckyBoostRoll();
+          results.push({ bet: 'Pass Line', result: 'push', payout: 0 });
         } else {
           results.push({ bet: 'Pass Line', result: 'lose', payout: -game.bets.pass });
         }
         if (!showResult) {
           showResult = true;
-          resultType = triggerLuckyBoost ? 'lucky' : 'lose';
+          resultType = triggerPush ? 'push' : 'lose';
           resultTitle = 'Seven Out!';
-          resultMessage = triggerLuckyBoost ? 'Lucky break! Bet returned.' : 'Pass Line loses.';
+          resultMessage = triggerPush ? 'Push! Bet returned.' : 'Pass Line loses.';
         }
       }
       
@@ -1050,8 +1022,6 @@ function resetCredits() {
   game.point = null;
   game.isComeOut = true;
   game.state = GameState.IDLE_BETTING;
-  game.rollCount = 0;
-  generateLuckyBoostRoll();
   
   UI.hideGameOver();
   UI.hideResult();
@@ -1112,8 +1082,6 @@ function saveSettings() {
   const settings = {
     soundEnabled: game.soundEnabled,
     volume: game.volume,
-    luckyBoostEnabled: game.luckyBoostEnabled,
-    highContrast: game.highContrast,
     reducedMotion: game.reducedMotion,
     lastBet: game.bets.pass || game.bets.dontPass || CONFIG.MIN_BET,
   };
@@ -1131,8 +1099,6 @@ function loadSettings() {
     if (saved) {
       const settings = JSON.parse(saved);
       game.volume = settings.volume ?? 0.6;
-      game.luckyBoostEnabled = settings.luckyBoostEnabled ?? true;
-      game.highContrast = settings.highContrast ?? false;
       game.reducedMotion = settings.reducedMotion ?? false;
       
       // Check system preference for reduced motion
@@ -1150,12 +1116,6 @@ function loadSettings() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
-  // Sound enable
-  UI.els.enableSound.addEventListener('click', async () => {
-    await AudioManager.unlock();
-    AudioManager.playClick();
-  });
-  
   // Sound toggle
   UI.els.btnSound.addEventListener('click', () => {
     if (!game.audioUnlocked) {
@@ -1237,19 +1197,6 @@ function setupEventListeners() {
     AudioManager.setVolume(e.target.value / 100);
   });
   
-  // Lucky boost toggle
-  UI.els.luckyBoostToggle.addEventListener('change', (e) => {
-    game.luckyBoostEnabled = e.target.checked;
-    saveSettings();
-  });
-  
-  // High contrast toggle
-  UI.els.highContrastToggle.addEventListener('change', (e) => {
-    game.highContrast = e.target.checked;
-    document.body.classList.toggle('high-contrast', game.highContrast);
-    saveSettings();
-  });
-  
   // Reduced motion toggle
   UI.els.reducedMotionToggle.addEventListener('change', (e) => {
     game.reducedMotion = e.target.checked;
@@ -1293,9 +1240,6 @@ function init() {
   // Initialize audio manager (won't play until unlocked)
   AudioManager.init();
   AudioManager.masterVolume = game.volume;
-  
-  // Generate first lucky boost target
-  generateLuckyBoostRoll();
   
   // Initialize UI
   UI.updateCredits();

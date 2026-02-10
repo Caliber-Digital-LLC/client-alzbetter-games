@@ -1,11 +1,47 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx vite build && cp -r craps dist/public/ && cp -r poker dist/public/ && cp -r roulette dist/public/ && cp -r wordchange dist/public/",
+  "buildCommand": "npx vite build && cp -r shared dist/public/ && cp -r craps dist/public/ && cp -r poker dist/public/ && cp -r roulette dist/public/ && cp -r wordchange dist/public/ && cp -r solitaire dist/public/ && cp -r slots dist/public/ && cp -r blackjack dist/public/ && cp -r holdem dist/public/",
   "outputDirectory": "dist/public",
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/slots/:path*",
+      "destination": "/slots/:path*"
+    },
+    {
+      "source": "/blackjack/:path*",
+      "destination": "/blackjack/:path*"
+    },
+    {
+      "source": "/roulette/:path*",
+      "destination": "/roulette/:path*"
+    },
+    {
+      "source": "/poker/:path*",
+      "destination": "/poker/:path*"
+    },
+    {
+      "source": "/holdem/:path*",
+      "destination": "/holdem/:path*"
+    },
+    {
+      "source": "/craps/:path*",
+      "destination": "/craps/:path*"
+    },
+    {
+      "source": "/wordchange/:path*",
+      "destination": "/wordchange/:path*"
+    },
+    {
+      "source": "/solitaire/:path*",
+      "destination": "/solitaire/:path*"
+    },
+    {
+      "source": "/shared/:path*",
+      "destination": "/shared/:path*"
+    },
+    {
+      "source": "/((?!slots|blackjack|roulette|poker|holdem|craps|wordchange|solitaire|shared).*)",
       "destination": "/index.html"
     }
   ]

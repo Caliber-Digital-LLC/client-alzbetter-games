@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="solitaireBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a472a"/>
+      <stop offset="100%" style="stop-color:#0d2818"/>
+    </linearGradient>
+    <linearGradient id="cardWhite" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e8e8e8"/>
+    </linearGradient>
+    <linearGradient id="cardBack" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#1e40af"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="120" height="120" rx="16" fill="url(#solitaireBg)"/>
+  
+  <!-- Felt pattern dots -->
+  <g fill="#ffffff" opacity="0.03">
+    <circle cx="15" cy="15" r="1.5"/>
+    <circle cx="35" cy="25" r="1.5"/>
+    <circle cx="55" cy="15" r="1.5"/>
+    <circle cx="75" cy="25" r="1.5"/>
+    <circle cx="95" cy="15" r="1.5"/>
+    <circle cx="105" cy="35" r="1.5"/>
+    <circle cx="25" cy="45" r="1.5"/>
+    <circle cx="45" cy="55" r="1.5"/>
+    <circle cx="85" cy="55" r="1.5"/>
+    <circle cx="15" cy="75" r="1.5"/>
+    <circle cx="65" cy="85" r="1.5"/>
+    <circle cx="95" cy="95" r="1.5"/>
+    <circle cx="25" cy="105" r="1.5"/>
+    <circle cx="75" cy="105" r="1.5"/>
+  </g>
+  
+  <!-- Stack of face-down cards (back row) -->
+  <g filter="url(#cardShadow)">
+    <rect x="14" y="22" width="28" height="38" rx="3" fill="url(#cardBack)"/>
+    <rect x="17" y="25" width="22" height="32" rx="1.5" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.3"/>
+    <rect x="19" y="27" width="18" height="28" rx="1" fill="url(#cardBack)" opacity="0.8"/>
+  </g>
+  
+  <!-- Second face-down card offset -->
+  <g filter="url(#cardShadow)">
+    <rect x="17" y="20" width="28" height="38" rx="3" fill="url(#cardBack)"/>
+    <rect x="20" y="23" width="22" height="32" rx="1.5" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.3"/>
+    <line x1="23" y1="26" x2="23" y2="52" stroke="#ffffff" stroke-width="0.3" opacity="0.2"/>
+    <line x1="27" y1="26" x2="27" y2="52" stroke="#ffffff" stroke-width="0.3" opacity="0.2"/>
+    <line x1="31" y1="26" x2="31" y2="52" stroke="#ffffff" stroke-width="0.3" opacity="0.2"/>
+    <line x1="35" y1="26" x2="35" y2="52" stroke="#ffffff" stroke-width="0.3" opacity="0.2"/>
+    <line x1="39" y1="26" x2="39" y2="52" stroke="#ffffff" stroke-width="0.3" opacity="0.2"/>
+  </g>
+  
+  <!-- Ace of Spades (prominent card) -->
+  <g filter="url(#cardShadow)">
+    <rect x="50" y="15" width="32" height="44" rx="3" fill="url(#cardWhite)"/>
+    <!-- A -->
+    <text x="54" y="27" font-family="Georgia, serif" font-size="10" font-weight="bold" fill="#1a1a1a">A</text>
+    <!-- Small spade top left -->
+    <path d="M56 30 L58 34 C58 36 55 36 55 34 C55 32 56 30 56 30 Z M55.5 35 L56.5 35 L56.5 37 L55.5 37 Z" fill="#1a1a1a" transform="scale(0.6) translate(35,10)"/>
+    <!-- Large center spade -->
+    <path d="M66 32 L72 44 C72 50 62 50 62 44 C62 38 66 32 66 32 Z M64 47 L68 47 L67 53 L65 53 Z" fill="#1a1a1a"/>
+  </g>
+  
+  <!-- King of Hearts (cascaded) -->
+  <g filter="url(#cardShadow)">
+    <rect x="62" y="35" width="32" height="44" rx="3" fill="url(#cardWhite)"/>
+    <!-- K -->
+    <text x="66" y="47" font-family="Georgia, serif" font-size="10" font-weight="bold" fill="#dc2626">K</text>
+    <!-- Small heart top left -->
+    <path d="M68 50 C65 47 65 52 68 54 C71 52 71 47 68 50" fill="#dc2626" transform="scale(0.5) translate(60,58)"/>
+    <!-- Large center heart -->
+    <path d="M78 52 C72 47 72 58 78 62 C84 58 84 47 78 52" fill="#dc2626"/>
+    <!-- Crown hint -->
+    <path d="M74 65 L78 61 L82 65 L80 67 L76 67 Z" fill="#dc2626" opacity="0.6"/>
+  </g>
+  
+  <!-- Queen of Diamonds (slightly visible) -->
+  <g filter="url(#cardShadow)">
+    <rect x="74" y="55" width="32" height="44" rx="3" fill="url(#cardWhite)"/>
+    <!-- Q -->
+    <text x="78" y="67" font-family="Georgia, serif" font-size="10" font-weight="bold" fill="#dc2626">Q</text>
+    <!-- Diamond -->
+    <polygon points="90,72 95,80 90,88 85,80" fill="#dc2626"/>
+  </g>
+  
+  <!-- Foundation pile indicator (empty slot) -->
+  <rect x="15" y="72" width="24" height="32" rx="3" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.3"/>
+  
+  <!-- Small completed hearts stack hint -->
+  <g opacity="0.7">
+    <rect x="46" y="75" width="22" height="30" rx="2.5" fill="url(#cardWhite)"/>
+    <path d="M57 82 C53 79 53 86 57 89 C61 86 61 79 57 82" fill="#dc2626"/>
+    <text x="49" y="86" font-family="Georgia, serif" font-size="7" font-weight="bold" fill="#dc2626">A</text>
+  </g>
+  
+  <!-- Decorative curved lines suggesting card movement -->
+  <path d="M50 60 Q 35 70 28 85" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.15"/>
+  
+  <!-- "Solitaire" text arc at bottom -->
+  <text x="60" y="115" font-family="Georgia, serif" font-size="8" fill="#ffffff" text-anchor="middle" opacity="0.6" letter-spacing="1">SOLITAIRE</text>
+</svg>

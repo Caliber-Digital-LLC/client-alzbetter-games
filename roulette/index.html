@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#1a3d2e">
   <title>Roulette</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../shared/help-modal.css">
 </head>
 <body>
   <!--
@@ -27,9 +28,8 @@
   - Set ENABLE_DOZENS: true/false to show dozen bets (1-12, 13-24, 25-36)
   - Set ENABLE_COLUMNS: true/false to show column bets
   
-  LUCKY BOOST:
-  - LUCKY_BOOST_ENABLED: true   // Default on/off state
-  - LUCKY_BOOST_RATE: 0.08      // 8% chance to push on loss
+  PLAYER FAVOR:
+  - PLAYER_FAVOR_RATE: 0.65   // 65% chance to push on loss
   
   SPIN ANIMATION:
   - SPIN_DURATION: 5000         // Base spin time in ms
@@ -50,60 +50,46 @@
   ═══════════════════════════════════════════════════════════════════════════════
   -->
 
-  <!-- Sound Enable Prompt (iOS requirement) -->
-  <div id="sound-prompt" class="sound-prompt hidden">
-    <button id="enable-sound" class="sound-enable-btn" aria-label="Enable sound">
-      🔊 Tap to Enable Sound
-    </button>
-  </div>
-
   <!-- Main Game Container -->
   <div class="game-container">
     
     <!-- Header -->
     <header class="header">
-      <div class="header-left">
-        <h1 class="title">Roulette</h1>
-      </div>
-      <div class="header-center">
-        <div class="stat-group">
-          <div class="stat">
-            <span class="stat-label">Credits</span>
-            <span id="credits-value" class="stat-value credits" aria-live="polite">200</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Total Bet</span>
-            <span id="total-bet-value" class="stat-value bet">0</span>
-          </div>
-        </div>
-      </div>
-      <div class="header-right">
+      <h1 class="header-title"><img src="/icons/roulette.svg" class="title-icon" alt=""> Roulette</h1>
+      <div class="header-actions">
         <button id="btn-sound" class="icon-btn" aria-label="Toggle sound">
-          <svg id="icon-sound-on" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <svg id="icon-sound-on" class="sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
           </svg>
-          <svg id="icon-sound-off" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-            <line x1="23" y1="9" x2="17" y2="15"/>
-            <line x1="17" y1="9" x2="23" y2="15"/>
+          <svg id="icon-sound-off" class="sound-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="22" y1="9" x2="16" y2="15"/>
+            <line x1="16" y1="9" x2="22" y2="15"/>
           </svg>
         </button>
         <button id="btn-help" class="icon-btn" aria-label="Help">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </button>
-        <button id="btn-settings" class="icon-btn" aria-label="Settings">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            <path d="M12 17h.01"/>
           </svg>
         </button>
       </div>
     </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat">
+        <span class="stat-label">Credits</span>
+        <span id="credits-value" class="stat-value credits" aria-live="polite">200</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Total Bet</span>
+        <span id="total-bet-value" class="stat-value bet">0</span>
+      </div>
+    </div>
 
     <!-- Main Game Area -->
     <main class="main-area">
@@ -132,21 +118,17 @@
       <!-- Bet Panel -->
       <section class="bet-panel" aria-label="Betting controls">
         
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
-          <button id="mode-simple" class="mode-btn active" aria-pressed="true">Simple Bets</button>
-          <button id="mode-table" class="mode-btn" aria-pressed="false">Table View</button>
-        </div>
+        <!-- Scrollable betting area -->
+        <div class="bet-scroll-area">
+          <!-- Chip Selector -->
+          <div class="chip-selector" role="radiogroup" aria-label="Select chip value">
+            <button class="chip chip-1" data-value="1" role="radio" aria-checked="false">1</button>
+            <button class="chip chip-5 selected" data-value="5" role="radio" aria-checked="true">5</button>
+            <button class="chip chip-10" data-value="10" role="radio" aria-checked="false">10</button>
+          </div>
 
-        <!-- Chip Selector -->
-        <div class="chip-selector" role="radiogroup" aria-label="Select chip value">
-          <button class="chip chip-1" data-value="1" role="radio" aria-checked="false">1</button>
-          <button class="chip chip-5 selected" data-value="5" role="radio" aria-checked="true">5</button>
-          <button class="chip chip-10" data-value="10" role="radio" aria-checked="false">10</button>
-        </div>
-
-        <!-- Simple Bets Mode -->
-        <div id="simple-bets" class="simple-bets">
+          <!-- Simple Bets Mode -->
+          <div id="simple-bets" class="simple-bets">
           
           <!-- Outside Bets -->
           <div class="bet-grid outside-bets">
@@ -244,44 +226,8 @@
           </div>
         </div>
 
-        <!-- Table View Mode (Advanced) -->
-        <div id="table-bets" class="table-bets hidden">
-          <div class="table-layout">
-            <!-- Zero -->
-            <div class="table-zero">
-              <button class="table-num zero" data-num="0">0</button>
-            </div>
-            
-            <!-- Number Grid -->
-            <div class="table-numbers" id="table-numbers">
-              <!-- Generated by JS: 1-36 in 3 columns -->
-            </div>
-            
-            <!-- Columns -->
-            <div class="table-columns">
-              <button class="table-col" data-bet="col1">2:1</button>
-              <button class="table-col" data-bet="col2">2:1</button>
-              <button class="table-col" data-bet="col3">2:1</button>
-            </div>
-            
-            <!-- Outside bets row -->
-            <div class="table-outside">
-              <button class="table-outside-btn" data-bet="low">1-18</button>
-              <button class="table-outside-btn" data-bet="even">EVEN</button>
-              <button class="table-outside-btn red" data-bet="red">RED</button>
-              <button class="table-outside-btn black" data-bet="black">BLK</button>
-              <button class="table-outside-btn" data-bet="odd">ODD</button>
-              <button class="table-outside-btn" data-bet="high">19-36</button>
-            </div>
-            
-            <!-- Dozens row -->
-            <div class="table-dozens">
-              <button class="table-dozen" data-bet="dozen1">1st 12</button>
-              <button class="table-dozen" data-bet="dozen2">2nd 12</button>
-              <button class="table-dozen" data-bet="dozen3">3rd 12</button>
-            </div>
-          </div>
         </div>
+        <!-- End scrollable betting area -->
 
         <!-- Action Buttons -->
         <div class="action-bar">
@@ -308,50 +254,47 @@
   </div>
 
   <!-- Help Modal -->
-  <div id="help-modal" class="modal hidden" role="dialog" aria-labelledby="help-title">
-    <div class="modal-content">
+  <div id="help-modal" class="modal-overlay hidden" role="dialog" aria-labelledby="help-title" data-no-scroll="true">
+    <div class="modal">
       <div class="modal-header">
-        <h2 id="help-title">How to Play</h2>
-        <button id="close-help" class="close-btn" aria-label="Close">×</button>
+        <h2 id="help-title" class="modal-title">How to Play</h2>
+        <button id="close-help" class="modal-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <div class="modal-body">
         <section class="help-section">
-          <h3>Getting Started</h3>
+          <h3>Quick Start</h3>
           <ol>
-            <li>Select a chip value (1, 5, or 10)</li>
-            <li>Tap a bet tile to place chips</li>
-            <li>Tap the same bet again to add more chips</li>
-            <li>Press SPIN when ready</li>
+            <li>Select a chip (1, 5, or 10)</li>
+            <li>Tap a bet to place chips (tap again to add)</li>
+            <li>Press SPIN</li>
           </ol>
         </section>
-        
+
         <section class="help-section">
-          <h3>Bet Types & Payouts</h3>
-          <table class="paytable">
-            <tr><th>Bet</th><th>Payout</th><th>Description</th></tr>
-            <tr><td>Straight Up</td><td>35:1</td><td>Single number</td></tr>
-            <tr><td>Red / Black</td><td>1:1</td><td>Color of number</td></tr>
-            <tr><td>Even / Odd</td><td>1:1</td><td>Even or odd number</td></tr>
-            <tr><td>1-18 / 19-36</td><td>1:1</td><td>Low or high half</td></tr>
-            <tr><td>Dozens</td><td>2:1</td><td>1-12, 13-24, or 25-36</td></tr>
-            <tr><td>Columns</td><td>2:1</td><td>Vertical column</td></tr>
-          </table>
-          <p class="note">Note: Zero (0) is green and loses all even-money bets.</p>
+          <h3>Common Payouts</h3>
+          <ul>
+            <li>Straight Up (single number): 35:1</li>
+            <li>Red/Black, Even/Odd, 1-18/19-36: 1:1</li>
+            <li>Dozens (1-12, 13-24, 25-36) or Columns: 2:1</li>
+          </ul>
+          <p class="note">Zero (0) is green and loses even-money bets.</p>
         </section>
-        
-        <section class="help-section">
-          <h3>🍀 Lucky Boost</h3>
-          <p>When enabled, if you lose a spin there's a small chance your bets will be returned as a "lucky break." This is purely for entertainment—no real money is involved!</p>
-        </section>
-        
+
         <section class="help-section">
           <h3>Tips</h3>
           <ul>
-            <li>Use REBET to quickly repeat your last bet</li>
-            <li>Tap CLEAR to remove all bets</li>
-            <li>Try Table View for a classic layout</li>
+            <li>REBET repeats your last bet</li>
+            <li>CLEAR removes all bets</li>
           </ul>
         </section>
+      </div>
+      <div class="modal-footer">
+          <button id="close-help-btn" class="btn btn-primary">Got It!</button>
       </div>
     </div>
   </div>
@@ -369,9 +312,6 @@
           <input type="range" id="volume-slider" min="0" max="100" value="60">
         </div>
         
-        <!-- Lucky Boost always enabled for player enjoyment -->
-        <input type="hidden" id="lucky-boost-toggle" checked>
-        <input type="hidden" id="high-contrast-toggle">
         <input type="hidden" id="reduced-motion-toggle">
       </div>
     </div>

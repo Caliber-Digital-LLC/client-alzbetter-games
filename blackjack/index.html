@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Blackjack - AlzBetter Games</title>
+    <link rel="stylesheet" href="../shared/casino-theme.css">
+    <link rel="stylesheet" href="../shared/casino-components.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../shared/help-modal.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="header-title"><img src="/icons/blackjack.svg" class="title-icon" alt=""> Blackjack</h1>
+            <div class="header-actions">
+                <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">
+                    <svg class="sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    </svg>
+                    <svg class="sound-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <line x1="22" y1="9" x2="16" y2="15"/>
+                        <line x1="16" y1="9" x2="22" y2="15"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="helpBtn" aria-label="Help">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <path d="M12 17h.01"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Credits</span>
+                <span class="stat-value" id="credits">500</span>
+            </div>
+        </div>
+
+        <!-- Table Area -->
+        <main class="table-area">
+            <!-- Deck Stack -->
+            <div class="deck-stack">
+                <div class="deck-card"></div>
+                <div class="deck-card"></div>
+                <div class="deck-card"></div>
+                <div class="deck-card"></div>
+                <div class="deck-card"></div>
+            </div>
+
+            <!-- Current Bet Display -->
+            <div class="bet-display hidden" id="betDisplay">
+                <div class="bet-chip" id="betChip"></div>
+                <div class="bet-amount" id="betAmount">0</div>
+            </div>
+
+            <!-- Dealer Hand -->
+            <section class="dealer-area">
+                <div class="hand-total hidden" id="dealerTotal">0</div>
+                <div class="hand-cards" id="dealerHand"></div>
+                <div class="hand-label">Dealer</div>
+            </section>
+
+            <!-- Status Message -->
+            <div class="status-message hidden" id="statusMessage"></div>
+
+            <!-- Player Hand -->
+            <section class="player-area">
+                <div class="hand-label">You</div>
+                <div class="hand-cards" id="playerHand"></div>
+                <div class="hand-total hidden" id="playerTotal">0</div>
+            </section>
+        </main>
+
+        <!-- Controls -->
+        <footer class="controls-area">
+            <!-- Betting Phase -->
+            <div class="betting-controls" id="bettingControls">
+                <div class="chip-row">
+                    <button class="chip" data-value="10">
+                        <svg viewBox="0 0 60 60">
+                            <circle cx="30" cy="30" r="28" fill="#3b82f6" stroke="#60a5fa" stroke-width="3"/>
+                            <circle cx="30" cy="30" r="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+                            <circle cx="30" cy="30" r="18" fill="#3b82f6" stroke="#60a5fa" stroke-width="1"/>
+                            <text x="30" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" fill="#ffffff">10</text>
+                        </svg>
+                    </button>
+                    <button class="chip" data-value="20">
+                        <svg viewBox="0 0 60 60">
+                            <circle cx="30" cy="30" r="28" fill="#ec4899" stroke="#f472b6" stroke-width="3"/>
+                            <circle cx="30" cy="30" r="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+                            <circle cx="30" cy="30" r="18" fill="#ec4899" stroke="#f472b6" stroke-width="1"/>
+                            <text x="30" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" fill="#ffffff">20</text>
+                        </svg>
+                    </button>
+                    <button class="chip" data-value="50">
+                        <svg viewBox="0 0 60 60">
+                            <circle cx="30" cy="30" r="28" fill="#22c55e" stroke="#4ade80" stroke-width="3"/>
+                            <circle cx="30" cy="30" r="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+                            <circle cx="30" cy="30" r="18" fill="#22c55e" stroke="#4ade80" stroke-width="1"/>
+                            <text x="30" y="32" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" fill="#ffffff">50</text>
+                        </svg>
+                    </button>
+                    <button class="chip" data-value="100">
+                        <svg viewBox="0 0 60 60">
+                            <circle cx="30" cy="30" r="28" fill="#ef4444" stroke="#f87171" stroke-width="3"/>
+                            <circle cx="30" cy="30" r="24" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/>
+                            <circle cx="30" cy="30" r="18" fill="#ef4444" stroke="#f87171" stroke-width="1"/>
+                            <text x="30" y="32" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="bold" fill="#ffffff">100</text>
+                        </svg>
+                    </button>
+                </div>
+                <div class="action-btns">
+                    <button class="btn btn-primary btn-lg" id="dealBtn">DEAL</button>
+                    <button class="btn btn-secondary hidden" id="clearBtn">Clear</button>
+                </div>
+            </div>
+
+            <!-- Playing Phase -->
+            <div class="playing-controls hidden" id="playingControls">
+                <button class="btn btn-stand" id="standBtn">STAND</button>
+                <button class="btn btn-double hidden" id="doubleBtn">DOUBLE</button>
+                <button class="btn btn-hit" id="hitBtn">HIT</button>
+            </div>
+
+            <!-- Resolved Phase -->
+            <div class="resolved-controls hidden" id="resolvedControls">
+                <button class="btn btn-primary btn-lg" id="newHandBtn">NEW HAND</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Rules Modal -->
+    <div class="modal-overlay" id="rulesModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">How to Play</h2>
+                <button class="modal-close" id="closeRulesBtn" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="rules-section">
+                    <h3>Goal</h3>
+                    <p>Get closer to 21 than the dealer without going over.</p>
+                </div>
+                <div class="rules-section">
+                    <h3>Card Values</h3>
+                    <ul>
+                        <li>Number cards (2-10): Face value</li>
+                        <li>Face cards (J, Q, K): 10 points</li>
+                        <li>Aces: 11 or 1 (whichever helps most)</li>
+                    </ul>
+                </div>
+                <div class="rules-section">
+                    <h3>Rules</h3>
+                    <ul>
+                        <li>Dealer stands on 17 and above</li>
+                        <li>Blackjack (21 on first two cards) pays 3:2</li>
+                        <li>Double Down: Double your bet for one more card</li>
+                    </ul>
+                </div>
+                <div class="rules-section">
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li>Tap chips to place your bet</li>
+                        <li>Tap DEAL to start the hand</li>
+                        <li>Choose HIT, STAND, or DOUBLE</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="gotItBtn">Got It!</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/casino-utils.js"></script>
+    <script src="blackjack.js"></script>
+</body>
+</html>

@@ -1,25 +1,25 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "lastUpdated": "2026-02-10T00:00:00Z",
   "games": [
     {
       "id": "slots",
-      "title": "Slots",
+      "title": "Lucky Slots",
       "description": "A relaxing slot machine game with smooth animations.",
-      "path": "/slots",
-      "external": false,
+      "path": "/slots/",
+      "external": true,
       "iconSvg": "/icons/slots.svg",
-      "gradient": ["#7b2d8e", "#5c2d91"],
+      "gradient": ["#1a5a4a", "#0d3d33"],
       "order": 1
     },
     {
       "id": "blackjack",
       "title": "Blackjack",
       "description": "Friendly casino classic. Beat the dealer to 21!",
-      "path": "/blackjack",
-      "external": false,
+      "path": "/blackjack/",
+      "external": true,
       "iconSvg": "/icons/blackjack.svg",
-      "gradient": ["#059669", "#047857"],
+      "gradient": ["#1a5a4a", "#0d3d33"],
       "order": 2
     },
     {
@@ -29,18 +29,28 @@
       "path": "/roulette/",
       "external": true,
       "iconSvg": "/icons/roulette.svg",
-      "gradient": ["#dc2626", "#991b1b"],
+      "gradient": ["#1a5a4a", "#0d3d33"],
       "order": 3
     },
     {
       "id": "poker",
       "title": "Video Poker",
-      "description": "Jacks or Better with Lucky Boost feature.",
+      "description": "Classic Jacks or Better video poker.",
       "path": "/poker/",
       "external": true,
       "iconSvg": "/icons/poker.svg",
-      "gradient": ["#6b18a0", "#4a1070"],
+      "gradient": ["#1a5a4a", "#0d3d33"],
       "order": 4
+    },
+    {
+      "id": "holdem",
+      "title": "Texas Hold'em",
+      "description": "Play poker against two friendly AI opponents!",
+      "path": "/holdem/",
+      "external": true,
+      "iconSvg": "/icons/poker.svg",
+      "gradient": ["#1a5a4a", "#0d3d33"],
+      "order": 5
     },
     {
       "id": "craps",
@@ -49,8 +59,8 @@
       "path": "/craps/",
       "external": true,
       "iconSvg": "/icons/craps.svg",
-      "gradient": ["#d97706", "#b45309"],
-      "order": 5
+      "gradient": ["#1a5a4a", "#0d3d33"],
+      "order": 6
     },
     {
       "id": "wordchange",
@@ -59,8 +69,18 @@
       "path": "/wordchange/",
       "external": true,
       "iconSvg": "/icons/wordchange.svg",
-      "gradient": ["#6366f1", "#4f46e5"],
-      "order": 6
+      "gradient": ["#1a5a4a", "#0d3d33"],
+      "order": 7
+    },
+    {
+      "id": "solitaire",
+      "title": "Solitaire",
+      "description": "Relaxing Klondike solitaire with hints and undo.",
+      "path": "/solitaire/",
+      "external": true,
+      "iconSvg": "/icons/solitaire.svg",
+      "gradient": ["#1a5a4a", "#0d3d33"],
+      "order": 8
     }
   ]
 }

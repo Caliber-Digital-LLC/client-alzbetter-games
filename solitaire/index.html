@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#1a5a4a">
+    
+    <title>Solitaire</title>
+    
+    <!--
+    ============================================================================
+    TUNING SECTION - Adjust these values to customize the game
+    ============================================================================
+    
+    CARD SIZE (in styles.css :root):
+    - --card-width: clamp(50px, 11vw, 90px)    - Card width
+    - --card-height: clamp(70px, 15.4vw, 126px) - Card height (1.4 ratio)
+    - --card-radius: clamp(4px, 1vw, 8px)       - Corner radius
+    - --card-font-size: clamp(14px, 3vw, 24px)  - Rank/suit font size
+    
+    ANIMATION SPEEDS (in solitaire.js CONFIG):
+    - CARD_MOVE_DURATION: 200      - Card movement animation (ms)
+    - CARD_FLIP_DURATION: 150      - Card flip animation (ms)
+    - HIGHLIGHT_DURATION: 1500     - Hint highlight duration (ms)
+    - AUTO_MOVE_DELAY: 100         - Delay between auto-moves (ms)
+    - WIN_ANIMATION_DURATION: 2000 - Win celebration (ms)
+    
+    EASY MODE (in solitaire.js CONFIG):
+    - FRIENDLY_SHUFFLE_ATTEMPTS: 5  - Number of reshuffles to try
+    - SOLVABILITY_THRESHOLD: 0.3    - Minimum "playability" score
+    
+    SOUND (in solitaire.js CONFIG):
+    - DEFAULT_VOLUME: 0.5           - Default volume (0-1)
+    - PICKUP_FREQ: 400              - Pickup sound frequency (Hz)
+    - PLACE_FREQ: 200               - Place sound frequency (Hz)
+    - FOUNDATION_FREQ: [523, 659, 784] - Foundation arpeggio (Hz)
+    - WIN_CHORD: [523, 659, 784, 1047] - Win chord frequencies (Hz)
+    
+    COLORS (in styles.css :root):
+    - --bg-felt: #1a5a4a            - Table felt background
+    - --card-back: #2563eb          - Card back color
+    - --highlight: #fbbf24          - Selection highlight
+    - --valid-dest: #22c55e         - Valid destination highlight
+    
+    DEFAULT SETTINGS (in solitaire.js CONFIG):
+    - DEFAULT_DRAW_COUNT: 1         - Cards to draw (1 or 3)
+    - DEFAULT_EASY_MODE: true       - Friendly shuffle on/off
+    - DEFAULT_TAP_MODE: true        - Tap-to-move on/off
+    - DEFAULT_AUTO_FOUNDATION: true - Auto-move to foundations
+    - DEFAULT_SOUND: true           - Sound enabled
+    
+    ============================================================================
+    -->
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../shared/help-modal.css">
+</head>
+<body>
+    <!-- Sound Permission Banner -->
+    <div id="sound-banner" class="sound-banner hidden">
+        <span>🔊</span> Tap anywhere to enable sounds
+    </div>
+    
+    <!-- ===== TOP BAR ===== -->
+    <header class="top-bar">
+        <h1 class="game-title">Solitaire</h1>
+        <div class="stats-display">
+            <span class="stat" id="moves-stat">Moves: <strong>0</strong></span>
+            <span class="stat" id="time-stat">Time: <strong>0:00</strong></span>
+        </div>
+        <div class="top-bar-buttons">
+            <button id="undo-btn" class="btn-icon" aria-label="Undo" disabled>↶</button>
+            <button id="hint-btn" class="btn-icon" aria-label="Hint">💡</button>
+            <button id="help-btn" class="btn-icon" aria-label="Help">?</button>
+            <button id="settings-btn" class="btn-icon" aria-label="Settings">⚙</button>
+        </div>
+    </header>
+    
+    <!-- ===== GAME AREA ===== -->
+    <main class="game-area" id="game-area">
+        <!-- Row 1: Stock, Waste, Spacer, Foundations -->
+        <div class="top-row">
+            <div class="stock-waste-area">
+                <div class="card-slot stock" id="stock" data-pile="stock">
+                    <div class="slot-placeholder">♠</div>
+                </div>
+                <div class="card-slot waste" id="waste" data-pile="waste"></div>
+            </div>
+            <div class="foundations-area">
+                <div class="card-slot foundation" id="foundation-0" data-pile="foundation" data-index="0">
+                    <div class="slot-placeholder">♠</div>
+                </div>
+                <div class="card-slot foundation" id="foundation-1" data-pile="foundation" data-index="1">
+                    <div class="slot-placeholder">♥</div>
+                </div>
+                <div class="card-slot foundation" id="foundation-2" data-pile="foundation" data-index="2">
+                    <div class="slot-placeholder">♦</div>
+                </div>
+                <div class="card-slot foundation" id="foundation-3" data-pile="foundation" data-index="3">
+                    <div class="slot-placeholder">♣</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 2: Tableau -->
+        <div class="tableau-area" id="tableau">
+            <div class="card-slot tableau-pile" id="tableau-0" data-pile="tableau" data-index="0"></div>
+            <div class="card-slot tableau-pile" id="tableau-1" data-pile="tableau" data-index="1"></div>
+            <div class="card-slot tableau-pile" id="tableau-2" data-pile="tableau" data-index="2"></div>
+            <div class="card-slot tableau-pile" id="tableau-3" data-pile="tableau" data-index="3"></div>
+            <div class="card-slot tableau-pile" id="tableau-4" data-pile="tableau" data-index="4"></div>
+            <div class="card-slot tableau-pile" id="tableau-5" data-pile="tableau" data-index="5"></div>
+            <div class="card-slot tableau-pile" id="tableau-6" data-pile="tableau" data-index="6"></div>
+        </div>
+    </main>
+    
+    <!-- ===== BOTTOM BAR ===== -->
+    <footer class="bottom-bar">
+        <button id="new-game-btn" class="btn btn-secondary">New Game</button>
+        <button id="auto-finish-btn" class="btn btn-primary hidden">Auto Finish</button>
+    </footer>
+    
+    <!-- ===== HELP MODAL ===== -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close">✕</button>
+            <h2 class="modal-title">How to Play</h2>
+            
+            <div class="help-section">
+                <h3>🎯 Goal</h3>
+                <p>Move all cards to the four foundation piles, building each suit from Ace to King.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>👆 Controls</h3>
+                <p><strong>Tap Mode:</strong> Tap a card to select it, then tap a valid destination to move it.</p>
+                <p><strong>Drag Mode:</strong> Drag cards from one pile to another.</p>
+                <p><strong>Double-tap:</strong> Quickly move a card to its foundation.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>📋 Rules</h3>
+                <ul>
+                    <li>Build tableau piles down by alternating colors (red on black)</li>
+                    <li>Only Kings can go in empty tableau spaces</li>
+                    <li>Build foundations up by suit (A, 2, 3... K)</li>
+                    <li>Tap the stock to draw new cards</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h3>💡 Tips</h3>
+                <ul>
+                    <li>Use the <strong>Hint</strong> button when stuck</li>
+                    <li>Use <strong>Undo</strong> to reverse mistakes</li>
+                    <li><strong>Auto Finish</strong> appears when you can win</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close">✕</button>
+            <h2 class="modal-title">Settings</h2>
+            
+            <div class="settings-list">
+                <div class="setting-item">
+                    <span class="setting-label">Draw Count</span>
+                    <div class="setting-toggle-group">
+                        <button id="draw-1" class="toggle-option active">1 Card</button>
+                        <button id="draw-3" class="toggle-option">3 Cards</button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Tap-to-Move</span>
+                    <button id="toggle-tap" class="toggle-btn active">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Auto-Move to Foundations</span>
+                    <button id="toggle-auto" class="toggle-btn active">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Friendly Shuffle (Easy Mode)</span>
+                    <button id="toggle-easy" class="toggle-btn active">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Sound Effects</span>
+                    <button id="toggle-sound" class="toggle-btn active">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+                
+                <div class="setting-item setting-volume">
+                    <span class="setting-label">Volume</span>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50">
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Reduce Motion</span>
+                    <button id="toggle-motion" class="toggle-btn">
+                        <span class="toggle-track"></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="settings-actions">
+                <button id="stats-btn" class="btn btn-outline">View Stats</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== STATS MODAL ===== -->
+    <div id="stats-modal" class="modal-overlay">
+        <div class="modal-content modal-small">
+            <button class="modal-close" aria-label="Close">✕</button>
+            <h2 class="modal-title">Statistics</h2>
+            
+            <div class="stats-grid">
+                <div class="stats-item">
+                    <span class="stats-value" id="stat-played">0</span>
+                    <span class="stats-label">Games Played</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-value" id="stat-won">0</span>
+                    <span class="stats-label">Games Won</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-value" id="stat-percent">0%</span>
+                    <span class="stats-label">Win Rate</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-value" id="stat-best">--:--</span>
+                    <span class="stats-label">Best Time</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-value" id="stat-streak">0</span>
+                    <span class="stats-label">Current Streak</span>
+                </div>
+            </div>
+            
+            <button id="reset-stats-btn" class="btn btn-outline btn-small">Reset Stats</button>
+        </div>
+    </div>
+    
+    <!-- ===== CONFIRM MODAL ===== -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content modal-small">
+            <h2 class="modal-title" id="confirm-title">New Game?</h2>
+            <p class="modal-text" id="confirm-text">Start a new game? Current progress will be lost.</p>
+            <div class="modal-actions">
+                <button id="confirm-cancel" class="btn btn-outline">Cancel</button>
+                <button id="confirm-ok" class="btn btn-primary">Start New Game</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== WIN MODAL ===== -->
+    <div id="win-modal" class="modal-overlay">
+        <div class="modal-content modal-win">
+            <h2 class="modal-title win-title">🎉 You Win!</h2>
+            <div class="win-stats">
+                <p>Moves: <strong id="win-moves">0</strong></p>
+                <p>Time: <strong id="win-time">0:00</strong></p>
+            </div>
+            <button id="win-new-game" class="btn btn-primary btn-large">Play Again</button>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="cards.js"></script>
+    <script src="solitaire.js"></script>
+</body>
+</html>

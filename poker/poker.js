@@ -23,9 +23,8 @@ const CONFIG = {
   DRAW_DELAY: 100,          // ms between each card drawn
   RESULT_DELAY: 500,        // ms before showing result
   
-  // Lucky Boost (player favor mechanic)
-  LUCKY_BOOST_ENABLED: true,
-  LUCKY_BOOST_RATE: 0.08,   // 8% chance to upgrade losing hand
+  // Player favor (65% win rate)
+  PLAYER_FAVOR_RATE: 0.65,  // 65% chance to upgrade losing hand to Jacks or Better
 };
 
 // Paytable multipliers (TUNING)
@@ -72,7 +71,6 @@ const game = {
   // Results
   lastWin: 0,
   lastHand: null,
-  luckyBoostTriggered: false,
   
   // Auto play
   autoPlayEnabled: false,
@@ -81,9 +79,7 @@ const game = {
   // Settings
   soundEnabled: true,
   audioUnlocked: false,
-  luckyBoostEnabled: true, // Always enabled for player enjoyment
   reducedMotion: false,
-  highContrast: false,
   volume: 0.6,
 };
 
@@ -304,27 +300,21 @@ function getWinningCardIndices(hand, handType) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LUCKY BOOST
+// PLAYER FAVOR (65% WIN RATE)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function tryLuckyBoost() {
-  if (!game.luckyBoostEnabled) return false;
-  
+function tryPlayerFavorUpgrade() {
   // Only trigger on losing hands
   const currentHand = evaluateHand(game.hand);
-  if (currentHand) return false; // Already a winner
+  if (currentHand) return false; // Already a winner, no need to upgrade
   
-  // Random chance to trigger
-  if (getRandomFloat() > CONFIG.LUCKY_BOOST_RATE) return false;
+  // 65% chance to upgrade losing hand
+  if (getRandomFloat() >= CONFIG.PLAYER_FAVOR_RATE) return false;
   
-  // Try to upgrade to Jacks or Better by replacing non-held cards
+  // Find non-held card indices to potentially replace
   const nonHeldIndices = game.held.map((h, i) => h ? -1 : i).filter(i => i >= 0);
   
-  if (nonHeldIndices.length === 0) {
-    // All cards were held, can't modify - return bet as push
-    game.luckyBoostTriggered = true;
-    return 'push';
-  }
+  if (nonHeldIndices.length === 0) return false; // All cards held, can't modify
   
   // Check if we have any high cards (J, Q, K, A) to pair
   const highCards = game.hand.filter((c, i) => game.held[i] && c.value >= 11);
@@ -332,7 +322,6 @@ function tryLuckyBoost() {
   if (highCards.length > 0 && nonHeldIndices.length > 0) {
     // Try to give them a pair of the high card
     const targetValue = highCards[0].value;
-    const targetRank = highCards[0].rank;
     
     // Find a card in the deck with matching rank but different suit
     const existingSuits = game.hand.filter(c => c.value === targetValue).map(c => c.suit);
@@ -342,14 +331,25 @@ function tryLuckyBoost() {
       // Replace one non-held card with the matching card
       const replaceIndex = nonHeldIndices[0];
       game.hand[replaceIndex] = matchingCard;
-      game.luckyBoostTriggered = true;
-      return 'upgrade';
+      return true;
     }
   }
   
-  // Couldn't upgrade naturally, return bet as push
-  game.luckyBoostTriggered = true;
-  return 'push';
+  // No high cards held - try to create Jacks or Better with any available high card
+  if (nonHeldIndices.length >= 2) {
+    // Find any high card pair we can create
+    for (const value of [14, 13, 12, 11]) { // A, K, Q, J
+      const cardsWithValue = game.deck.filter(c => c.value === value);
+      if (cardsWithValue.length >= 2) {
+        // Replace two non-held cards with a pair
+        game.hand[nonHeldIndices[0]] = cardsWithValue[0];
+        game.hand[nonHeldIndices[1]] = cardsWithValue[1];
+        return true;
+      }
+    }
+  }
+  
+  return false; // Couldn't upgrade
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -518,30 +518,6 @@ const AudioManager = {
     osc.start();
     osc.stop(this.ctx.currentTime + 0.25);
   },
-  
-  // Lucky boost - magical chime
-  playLuckyBoost() {
-    if (!game.soundEnabled || !this.ctx) return;
-    
-    const notes = [880, 1174.66, 1396.91];
-    
-    notes.forEach((freq, i) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      
-      const startTime = this.ctx.currentTime + i * 0.1;
-      gain.gain.setValueAtTime(0.12 * this.masterVolume, startTime);
-      gain.gain.linearRampToValueAtTime(0.001, startTime + 0.5);
-      
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + 0.5);
-    });
-  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -597,8 +573,6 @@ const UI = {
       
       // Settings
       volumeSlider: document.getElementById('volume-slider'),
-      luckyBoostToggle: document.getElementById('lucky-boost-toggle'),
-      highContrastToggle: document.getElementById('high-contrast-toggle'),
       reducedMotionToggle: document.getElementById('reduced-motion-toggle'),
     };
   },
@@ -724,15 +698,11 @@ const UI = {
     });
   },
   
-  showResult(handType, payout, isLucky = false) {
+  showResult(handType, payout) {
     const resultEl = this.els.resultDisplay;
-    resultEl.classList.remove('hidden', 'lose', 'lucky');
+    resultEl.classList.remove('hidden', 'lose');
     
-    if (isLucky) {
-      resultEl.classList.add('lucky');
-      this.els.resultHand.textContent = '🍀 Lucky Break!';
-      this.els.resultPayout.textContent = 'Bet returned';
-    } else if (handType && payout > 0) {
+    if (handType && payout > 0) {
       this.els.resultHand.textContent = PAYTABLE[handType].name;
       this.els.resultPayout.textContent = `+${payout} credits`;
     } else {
@@ -784,22 +754,27 @@ const UI = {
   },
   
   showModal(modalEl) {
+    if (!modalEl) return;
     modalEl.classList.remove('hidden');
   },
   
   hideModal(modalEl) {
+    if (!modalEl) return;
     modalEl.classList.add('hidden');
   },
   
   showSoundPrompt() {
+    if (!this.els.soundPrompt) return;
     this.els.soundPrompt.classList.remove('hidden');
   },
   
   hideSoundPrompt() {
+    if (!this.els.soundPrompt) return;
     this.els.soundPrompt.classList.add('hidden');
   },
   
   updateSoundIcon() {
+    if (!this.els.iconSoundOn || !this.els.iconSoundOff) return;
     if (game.soundEnabled) {
       this.els.iconSoundOn.style.display = 'block';
       this.els.iconSoundOff.style.display = 'none';
@@ -810,14 +785,15 @@ const UI = {
   },
   
   applySettings() {
-    document.body.classList.toggle('high-contrast', game.highContrast);
-    this.els.highContrastToggle.checked = game.highContrast;
-    
     document.body.classList.toggle('reduce-motion', game.reducedMotion);
-    this.els.reducedMotionToggle.checked = game.reducedMotion;
-    
-    this.els.luckyBoostToggle.checked = game.luckyBoostEnabled;
-    this.els.volumeSlider.value = game.volume * 100;
+
+    if (this.els.reducedMotionToggle && this.els.reducedMotionToggle.type === 'checkbox') {
+      this.els.reducedMotionToggle.checked = game.reducedMotion;
+    }
+
+    if (this.els.volumeSlider) {
+      this.els.volumeSlider.value = game.volume * 100;
+    }
     AudioManager.masterVolume = game.volume;
   },
   
@@ -885,7 +861,6 @@ async function deal() {
   game.credits -= game.bet;
   game.lastWin = 0;
   game.lastHand = null;
-  game.luckyBoostTriggered = false;
   game.held = [false, false, false, false, false];
   
   UI.updateCredits();
@@ -948,18 +923,18 @@ async function draw() {
   const drawTime = replaceIndices.length * CONFIG.DRAW_DELAY + 300;
   await new Promise(resolve => setTimeout(resolve, drawTime));
   
-  // Apply lucky boost if needed (before evaluation)
-  const luckyResult = tryLuckyBoost();
-  if (luckyResult === 'upgrade') {
+  // Apply player favor upgrade if needed (65% chance on losing hands)
+  const didUpgrade = tryPlayerFavorUpgrade();
+  if (didUpgrade) {
     // Re-render hand to show upgraded cards
     UI.renderHand(false);
   }
   
   // Evaluate final hand
-  await showResult(luckyResult);
+  await showResult();
 }
 
-async function showResult(luckyResult) {
+async function showResult() {
   game.state = GameState.SHOWING_RESULT;
   
   await new Promise(resolve => setTimeout(resolve, CONFIG.RESULT_DELAY));
@@ -968,7 +943,6 @@ async function showResult(luckyResult) {
   game.lastHand = handType;
   
   let payout = 0;
-  let isLucky = false;
   
   if (handType) {
     // Winner!
@@ -990,28 +964,6 @@ async function showResult(luckyResult) {
     }
     
     UI.updateInstruction(`${PAYTABLE[handType].name}! +${payout} credits`);
-  } else if (luckyResult === 'push') {
-    // Lucky push - return bet
-    game.credits += game.bet;
-    isLucky = true;
-    AudioManager.playLuckyBoost();
-    UI.updateInstruction('🍀 Lucky break! Bet returned.');
-  } else if (luckyResult === 'upgrade') {
-    // Lucky upgrade resulted in a win
-    const upgradedHand = evaluateHand(game.hand);
-    if (upgradedHand) {
-      payout = game.bet * PAYTABLE[upgradedHand].multiplier;
-      game.credits += payout;
-      game.lastWin = payout;
-      isLucky = true;
-      
-      const winningIndices = getWinningCardIndices(game.hand, upgradedHand);
-      UI.highlightWinningCards(winningIndices);
-      UI.highlightPaytableRow(upgradedHand);
-      
-      AudioManager.playLuckyBoost();
-      UI.updateInstruction(`🍀 Lucky! ${PAYTABLE[upgradedHand].name}! +${payout}`);
-    }
   } else {
     // Loss
     AudioManager.playLoss();
@@ -1020,7 +972,7 @@ async function showResult(luckyResult) {
   
   UI.updateCredits();
   UI.updateWin(game.lastWin);
-  UI.showResult(handType, payout, isLucky && !handType);
+  UI.showResult(handType, payout);
   
   // Check for game over
   if (game.credits <= 0) {
@@ -1111,8 +1063,6 @@ function saveSettings() {
   const settings = {
     soundEnabled: game.soundEnabled,
     volume: game.volume,
-    luckyBoostEnabled: game.luckyBoostEnabled,
-    highContrast: game.highContrast,
     reducedMotion: game.reducedMotion,
     lastBet: game.bet,
   };
@@ -1130,8 +1080,6 @@ function loadSettings() {
     if (saved) {
       const settings = JSON.parse(saved);
       game.volume = settings.volume ?? 0.6;
-      game.luckyBoostEnabled = settings.luckyBoostEnabled ?? true;
-      game.highContrast = settings.highContrast ?? false;
       game.reducedMotion = settings.reducedMotion ?? false;
       game.bet = Math.min(Math.max(settings.lastBet ?? 1, CONFIG.MIN_BET), CONFIG.MAX_BET);
       
@@ -1149,14 +1097,8 @@ function loadSettings() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
-  // Sound enable
-  UI.els.enableSound.addEventListener('click', async () => {
-    await AudioManager.unlock();
-    AudioManager.playClick();
-  });
-  
   // Sound toggle
-  UI.els.btnSound.addEventListener('click', () => {
+  UI.els.btnSound?.addEventListener('click', () => {
     if (!game.audioUnlocked) {
       AudioManager.unlock();
       return;
@@ -1168,11 +1110,11 @@ function setupEventListeners() {
   });
   
   // Bet controls
-  UI.els.betMinus.addEventListener('click', () => changeBet(-1));
-  UI.els.betPlus.addEventListener('click', () => changeBet(1));
+  UI.els.betMinus?.addEventListener('click', () => changeBet(-1));
+  UI.els.betPlus?.addEventListener('click', () => changeBet(1));
   
   // Deal/Draw button
-  UI.els.btnDeal.addEventListener('click', () => {
+  UI.els.btnDeal?.addEventListener('click', () => {
     if (!game.audioUnlocked) {
       AudioManager.unlock();
     }
@@ -1180,10 +1122,11 @@ function setupEventListeners() {
   });
   
   // Clear holds
-  UI.els.btnClearHolds.addEventListener('click', clearHolds);
+  UI.els.btnClearHolds?.addEventListener('click', clearHolds);
   
   // Card click handlers
   UI.els.cards.forEach((cardEl, index) => {
+    if (!cardEl) return;
     cardEl.addEventListener('click', () => toggleHold(index));
     cardEl.addEventListener('keydown', (e) => {
       if (e.code === 'Space' || e.code === 'Enter') {
@@ -1194,67 +1137,58 @@ function setupEventListeners() {
   });
   
   // Paytable toggle
-  UI.els.paytableToggle.addEventListener('click', () => {
+  UI.els.paytableToggle?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.togglePaytable();
   });
   
   // Auto play
-  UI.els.autoPlay.addEventListener('change', toggleAutoPlay);
+  UI.els.autoPlay?.addEventListener('change', toggleAutoPlay);
   
   // Reset credits
-  UI.els.btnResetCredits.addEventListener('click', () => {
+  UI.els.btnResetCredits?.addEventListener('click', () => {
     AudioManager.playClick();
     resetCredits();
   });
   
   // Help modal
-  document.getElementById('btn-help').addEventListener('click', () => {
+  document.getElementById('btn-help')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.showModal(UI.els.helpModal);
   });
-  document.getElementById('close-help').addEventListener('click', () => {
+  document.getElementById('close-help')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.hideModal(UI.els.helpModal);
   });
   
   // Settings modal
-  document.getElementById('btn-settings').addEventListener('click', () => {
+  document.getElementById('btn-settings')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.showModal(UI.els.settingsModal);
   });
-  document.getElementById('close-settings').addEventListener('click', () => {
+  document.getElementById('close-settings')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.hideModal(UI.els.settingsModal);
   });
   
   // Settings controls
-  UI.els.volumeSlider.addEventListener('input', (e) => {
+  UI.els.volumeSlider?.addEventListener('input', (e) => {
     AudioManager.setVolume(e.target.value / 100);
   });
   
-  UI.els.luckyBoostToggle.addEventListener('change', (e) => {
-    game.luckyBoostEnabled = e.target.checked;
-    saveSettings();
-  });
-  
-  UI.els.highContrastToggle.addEventListener('change', (e) => {
-    game.highContrast = e.target.checked;
-    document.body.classList.toggle('high-contrast', game.highContrast);
-    saveSettings();
-  });
-  
-  UI.els.reducedMotionToggle.addEventListener('change', (e) => {
-    game.reducedMotion = e.target.checked;
-    document.body.classList.toggle('reduce-motion', game.reducedMotion);
-    saveSettings();
-  });
+  if (UI.els.reducedMotionToggle && UI.els.reducedMotionToggle.type === 'checkbox') {
+    UI.els.reducedMotionToggle.addEventListener('change', (e) => {
+      game.reducedMotion = e.target.checked;
+      document.body.classList.toggle('reduce-motion', game.reducedMotion);
+      saveSettings();
+    });
+  }
   
   // Close modals on backdrop click
-  UI.els.helpModal.addEventListener('click', (e) => {
+  UI.els.helpModal?.addEventListener('click', (e) => {
     if (e.target === UI.els.helpModal) UI.hideModal(UI.els.helpModal);
   });
-  UI.els.settingsModal.addEventListener('click', (e) => {
+  UI.els.settingsModal?.addEventListener('click', (e) => {
     if (e.target === UI.els.settingsModal) UI.hideModal(UI.els.settingsModal);
   });
   

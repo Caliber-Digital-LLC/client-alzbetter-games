@@ -1,0 +1,518 @@
+/**
+ * Blackjack - Game Styles
+ * Uses shared casino-theme.css and casino-components.css
+ */
+
+/* ============================================================================
+   LAYOUT
+   ============================================================================ */
+.game-container {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Custom header with credits display */
+.header {
+    background: var(--bg-darker);
+    justify-content: center;
+    position: relative;
+}
+
+.header-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--accent-gold);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.title-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.header-actions {
+    position: absolute;
+    right: var(--space-md);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: var(--space-sm);
+}
+
+/* Stats Bar */
+.stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xl);
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: white;
+}
+
+/* ============================================================================
+   TABLE AREA
+   ============================================================================ */
+.table-area {
+    flex: 1;
+    position: relative;
+    background: radial-gradient(ellipse at center, #40916c 0%, var(--felt-color) 60%, var(--felt-dark) 100%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Wood trim at bottom */
+.table-area::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(180deg, transparent 0%, #5c3d2e 70%, #3d2314 100%);
+    pointer-events: none;
+}
+
+/* ============================================================================
+   DECK STACK
+   ============================================================================ */
+.deck-stack {
+    position: absolute;
+    top: var(--space-lg);
+    left: var(--space-lg);
+}
+
+.deck-card {
+    position: absolute;
+    width: 85px;
+    height: 119px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b5998 0%, #4a69bd 100%);
+    border: 2px solid #2c3e50;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.deck-card::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 4px;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(255, 255, 255, 0.1) 4px,
+        rgba(255, 255, 255, 0.1) 8px
+    );
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.deck-card:nth-child(1) { top: 0; left: 0; z-index: 5; }
+.deck-card:nth-child(2) { top: -2px; left: 1px; z-index: 4; }
+.deck-card:nth-child(3) { top: -4px; left: 2px; z-index: 3; }
+.deck-card:nth-child(4) { top: -6px; left: 3px; z-index: 2; }
+.deck-card:nth-child(5) { top: -8px; left: 4px; z-index: 1; }
+
+/* ============================================================================
+   BET DISPLAY
+   ============================================================================ */
+.bet-display {
+    position: absolute;
+    right: var(--space-xl);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    z-index: 10;
+}
+
+.bet-display.hidden {
+    display: none;
+}
+
+.bet-chip {
+    width: 72px;
+    height: 72px;
+}
+
+.bet-amount {
+    background: rgba(30, 41, 59, 0.9);
+    color: white;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    min-width: 48px;
+    text-align: center;
+}
+
+/* ============================================================================
+   HAND AREAS
+   ============================================================================ */
+.dealer-area,
+.player-area {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 5;
+}
+
+.dealer-area {
+    top: var(--space-lg);
+}
+
+.player-area {
+    bottom: 120px;
+}
+
+.hand-label {
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: var(--space-xs) 0;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+.dealer-area .hand-label {
+    background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+    border: 2px solid #ff6b6b;
+}
+
+.hand-total {
+    background: rgba(30, 41, 59, 0.9);
+    color: white;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    min-width: 48px;
+    text-align: center;
+}
+
+.hand-total.hidden {
+    display: none;
+}
+
+.hand-cards {
+    display: flex;
+    margin: var(--space-xs) 0;
+}
+
+/* ============================================================================
+   PLAYING CARDS
+   ============================================================================ */
+.playing-card {
+    --card-w: clamp(80px, 22vw, 130px);
+    --card-h: calc(var(--card-w) * 1.4);
+    
+    width: var(--card-w);
+    height: var(--card-h);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+    margin-left: -20px;
+}
+
+.playing-card:first-child {
+    margin-left: 0;
+}
+
+.playing-card svg {
+    width: 100%;
+    height: 100%;
+}
+
+.playing-card.dealing {
+    animation: deal-card 0.3s ease forwards;
+}
+
+@keyframes deal-card {
+    from {
+        transform: translateX(-100px) rotate(-10deg);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) rotate(0);
+        opacity: 1;
+    }
+}
+
+/* ============================================================================
+   STATUS MESSAGE
+   ============================================================================ */
+.status-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    z-index: 20;
+    animation: pulse-status 1s ease infinite;
+}
+
+.status-message.hidden {
+    display: none;
+}
+
+@keyframes pulse-status {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ============================================================================
+   CONTROLS AREA
+   ============================================================================ */
+.controls-area {
+    background: linear-gradient(180deg, #5c3d2e 0%, #3d2314 100%);
+    padding: var(--space-md) var(--space-lg);
+    padding-bottom: calc(var(--space-md) + var(--safe-bottom));
+    position: relative;
+    z-index: 15;
+}
+
+/* Betting Controls */
+.betting-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: center;
+}
+
+.chip-row {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.chip {
+    width: 72px;
+    height: 72px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    padding: 0;
+}
+
+.chip:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.chip:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chip.selected {
+    transform: scale(1.1) translateY(-8px);
+}
+
+.chip svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.action-btns {
+    display: flex;
+    gap: var(--space-md);
+}
+
+/* Playing Controls */
+.playing-controls {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.playing-controls.hidden,
+.resolved-controls.hidden {
+    display: none;
+}
+
+.btn-stand {
+    flex: 1;
+    max-width: 150px;
+    min-height: 56px;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    border-radius: var(--radius-md);
+}
+
+.btn-stand:hover {
+    background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+}
+
+.btn-double {
+    flex: 1;
+    max-width: 150px;
+    min-height: 56px;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: var(--radius-md);
+}
+
+.btn-double:hover {
+    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+.btn-double.hidden {
+    display: none;
+}
+
+.btn-hit {
+    flex: 1;
+    max-width: 150px;
+    min-height: 56px;
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+    border-radius: var(--radius-md);
+}
+
+.btn-hit:hover {
+    background: linear-gradient(180deg, #22d3ee 0%, #06b6d4 100%);
+}
+
+/* Resolved Controls */
+.resolved-controls {
+    display: flex;
+    justify-content: center;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (min-width: 768px) {
+    .playing-card {
+        --card-w: 130px;
+    }
+    
+    .chip {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .bet-chip {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .deck-card {
+        width: 100px;
+        height: 140px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .playing-card {
+        --card-w: 140px;
+    }
+    
+    .chip {
+        width: 88px;
+        height: 88px;
+    }
+    
+    .bet-chip {
+        width: 88px;
+        height: 88px;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .table-area::after {
+        height: 60px;
+    }
+    
+    .dealer-area {
+        top: var(--space-sm);
+    }
+    
+    .player-area {
+        bottom: 90px;
+    }
+    
+    .playing-card {
+        --card-w: 70px;
+    }
+    
+    .controls-area {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .chip-row {
+        gap: var(--space-sm);
+    }
+    
+    .chip {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .bet-chip {
+        width: 56px;
+        height: 56px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .playing-card.dealing {
+        animation: none;
+    }
+    
+    .status-message {
+        animation: none;
+    }
+}

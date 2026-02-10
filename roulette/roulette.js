@@ -17,9 +17,8 @@ const CONFIG = {
   CHIP_VALUES: [1, 5, 10],
   DEFAULT_CHIP: 5,
   
-  // Lucky Boost
-  LUCKY_BOOST_ENABLED: true,
-  LUCKY_BOOST_RATE: 0.08, // 8% chance to push on loss
+  // Player favor (65% chance to push on loss)
+  PLAYER_FAVOR_RATE: 0.65,
   
   // Spin animation
   SPIN_DURATION: 5000,        // ms
@@ -82,7 +81,6 @@ const game = {
   // Results
   lastResult: null,
   lastWin: 0,
-  luckyBoostTriggered: false,
   
   // Wheel
   wheelRotation: 0,
@@ -92,9 +90,7 @@ const game = {
   // Settings
   soundEnabled: true, // Enabled by default
   audioUnlocked: false,
-  luckyBoostEnabled: true, // Always enabled for player enjoyment
   reducedMotion: false,
-  highContrast: false,
   volume: 0.6,
   
   // Mode
@@ -311,16 +307,12 @@ function getBetDisplayName(betType) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LUCKY BOOST
+// PLAYER FAVOR
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function tryLuckyBoost(totalWin) {
-  if (!game.luckyBoostEnabled) return false;
+function tryPlayerFavor(totalWin) {
   if (totalWin > 0) return false; // Only on loss
-  if (getRandomFloat() > CONFIG.LUCKY_BOOST_RATE) return false;
-  
-  game.luckyBoostTriggered = true;
-  return true;
+  return getRandomFloat() < CONFIG.PLAYER_FAVOR_RATE;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -640,27 +632,21 @@ const AudioManager = {
     osc.stop(this.ctx.currentTime + 0.3);
   },
   
-  playLuckyBoost() {
+  playPush() {
     if (!game.soundEnabled || !this.ctx) return;
     
-    const notes = [880, 1174.66, 1396.91];
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
     
-    notes.forEach((freq, i) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      
-      const startTime = this.ctx.currentTime + i * 0.1;
-      gain.gain.setValueAtTime(0.12 * this.masterVolume, startTime);
-      gain.gain.linearRampToValueAtTime(0.001, startTime + 0.5);
-      
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + 0.5);
-    });
+    osc.type = 'triangle';
+    osc.frequency.value = 440; // A4
+    gain.gain.setValueAtTime(0.08 * this.masterVolume, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.2);
   },
 };
 
@@ -730,8 +716,6 @@ const UI = {
       
       // Settings
       volumeSlider: document.getElementById('volume-slider'),
-      luckyBoostToggle: document.getElementById('lucky-boost-toggle'),
-      highContrastToggle: document.getElementById('high-contrast-toggle'),
       reducedMotionToggle: document.getElementById('reduced-motion-toggle'),
     };
     
@@ -894,11 +878,11 @@ const UI = {
     this.els.resultDisplay.classList.add('hidden');
   },
   
-  showWin(totalWin, winnings, isLucky = false) {
-    if (isLucky) {
-      this.els.winMessage.textContent = '🍀 Lucky Break!';
+  showWin(totalWin, winnings, isPush = false) {
+    if (isPush) {
+      this.els.winMessage.textContent = 'Push!';
       this.els.winAmount.textContent = 'Bets Returned';
-      this.els.winAmount.className = 'win-amount lucky';
+      this.els.winAmount.className = 'win-amount';
       this.els.winBreakdown.textContent = '';
     } else if (totalWin > 0) {
       this.els.winMessage.textContent = 'You Won!';
@@ -925,15 +909,25 @@ const UI = {
   },
   
   setMode(simple) {
-    game.simpleMode = simple;
-    
-    this.els.modeSimple.classList.toggle('active', simple);
-    this.els.modeSimple.setAttribute('aria-pressed', simple);
-    this.els.modeTable.classList.toggle('active', !simple);
-    this.els.modeTable.setAttribute('aria-pressed', !simple);
-    
-    this.els.simpleBets.classList.toggle('hidden', !simple);
-    this.els.tableBets.classList.toggle('hidden', simple);
+    // Table mode UI was removed; roulette now runs in simple mode only.
+    game.simpleMode = true;
+    const effectiveSimple = true;
+
+    if (this.els.modeSimple) {
+      this.els.modeSimple.classList.toggle('active', effectiveSimple);
+      this.els.modeSimple.setAttribute('aria-pressed', effectiveSimple);
+    }
+    if (this.els.modeTable) {
+      this.els.modeTable.classList.toggle('active', !effectiveSimple);
+      this.els.modeTable.setAttribute('aria-pressed', !effectiveSimple);
+    }
+
+    if (this.els.simpleBets) {
+      this.els.simpleBets.classList.toggle('hidden', !effectiveSimple);
+    }
+    if (this.els.tableBets) {
+      this.els.tableBets.classList.toggle('hidden', effectiveSimple);
+    }
   },
   
   toggleNumberGrid() {
@@ -971,22 +965,29 @@ const UI = {
   },
   
   showModal(modalEl) {
+    if (!modalEl) return;
     modalEl.classList.remove('hidden');
+    modalEl.classList.add('active');
   },
   
   hideModal(modalEl) {
+    if (!modalEl) return;
     modalEl.classList.add('hidden');
+    modalEl.classList.remove('active');
   },
   
   showSoundPrompt() {
+    if (!this.els.soundPrompt) return;
     this.els.soundPrompt.classList.remove('hidden');
   },
   
   hideSoundPrompt() {
+    if (!this.els.soundPrompt) return;
     this.els.soundPrompt.classList.add('hidden');
   },
   
   updateSoundIcon() {
+    if (!this.els.iconSoundOn || !this.els.iconSoundOff) return;
     if (game.soundEnabled) {
       this.els.iconSoundOn.style.display = 'block';
       this.els.iconSoundOff.style.display = 'none';
@@ -997,14 +998,15 @@ const UI = {
   },
   
   applySettings() {
-    document.body.classList.toggle('high-contrast', game.highContrast);
-    this.els.highContrastToggle.checked = game.highContrast;
-    
     document.body.classList.toggle('reduce-motion', game.reducedMotion);
-    this.els.reducedMotionToggle.checked = game.reducedMotion;
-    
-    this.els.luckyBoostToggle.checked = game.luckyBoostEnabled;
-    this.els.volumeSlider.value = game.volume * 100;
+
+    if (this.els.reducedMotionToggle && this.els.reducedMotionToggle.type === 'checkbox') {
+      this.els.reducedMotionToggle.checked = game.reducedMotion;
+    }
+
+    if (this.els.volumeSlider) {
+      this.els.volumeSlider.value = game.volume * 100;
+    }
     AudioManager.masterVolume = game.volume;
   },
   
@@ -1049,7 +1051,6 @@ async function spin() {
   
   // Start spinning
   game.state = GameState.SPINNING;
-  game.luckyBoostTriggered = false;
   
   UI.hideResult();
   UI.hideWin();
@@ -1129,11 +1130,11 @@ function finishSpin(result) {
   // Calculate winnings
   const { winnings, totalWin } = calculateWinnings(result);
   
-  // Check lucky boost
-  const isLucky = tryLuckyBoost(totalWin);
+  // Check player favor (65% chance to push on loss)
+  const isPush = tryPlayerFavor(totalWin);
   
   // Apply winnings
-  if (isLucky) {
+  if (isPush) {
     // Return all bets
     const totalBet = Object.values(game.bets).reduce((sum, amt) => sum + amt, 0);
     game.credits += totalBet;
@@ -1147,12 +1148,12 @@ function finishSpin(result) {
   
   // Update UI
   UI.showResult(result);
-  UI.showWin(totalWin, winnings, isLucky);
+  UI.showWin(totalWin, winnings, isPush);
   UI.updateCredits();
   
   // Play sound
-  if (isLucky) {
-    AudioManager.playLuckyBoost();
+  if (isPush) {
+    AudioManager.playPush();
   } else if (totalWin >= getTotalBet() * 10) {
     AudioManager.playBigWin();
     UI.showConfetti();
@@ -1166,8 +1167,8 @@ function finishSpin(result) {
   clearBets();
   
   // Update instruction
-  if (isLucky) {
-    UI.updateInstruction('🍀 Lucky break! Bets returned.');
+  if (isPush) {
+    UI.updateInstruction('Push! Bets returned.');
   } else if (totalWin > 0) {
     UI.updateInstruction(`You won ${totalWin} credits!`);
   } else {
@@ -1188,7 +1189,7 @@ function finishSpin(result) {
     UI.updateBetTiles();
     UI.updateTotalBet();
     
-    if (totalWin === 0 && !isLucky) {
+    if (totalWin === 0 && !isPush) {
       UI.updateInstruction('Place your bets for the next spin.');
     }
   }, 2000);
@@ -1313,8 +1314,6 @@ function saveSettings() {
   const settings = {
     soundEnabled: game.soundEnabled,
     volume: game.volume,
-    luckyBoostEnabled: game.luckyBoostEnabled,
-    highContrast: game.highContrast,
     reducedMotion: game.reducedMotion,
     selectedChip: game.selectedChip,
     lastBets: game.lastBets,
@@ -1333,8 +1332,6 @@ function loadSettings() {
     if (saved) {
       const settings = JSON.parse(saved);
       game.volume = settings.volume ?? 0.6;
-      game.luckyBoostEnabled = settings.luckyBoostEnabled ?? true;
-      game.highContrast = settings.highContrast ?? false;
       game.reducedMotion = settings.reducedMotion ?? false;
       game.selectedChip = settings.selectedChip ?? CONFIG.DEFAULT_CHIP;
       game.lastBets = settings.lastBets ?? {};
@@ -1353,12 +1350,6 @@ function loadSettings() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
-  // Sound enable
-  UI.els.enableSound.addEventListener('click', async () => {
-    await AudioManager.unlock();
-    AudioManager.playClick();
-  });
-  
   // Sound toggle
   UI.els.btnSound.addEventListener('click', () => {
     if (!game.audioUnlocked) {
@@ -1406,15 +1397,19 @@ function setupEventListeners() {
     }
   });
   
-  // Mode toggle
-  UI.els.modeSimple.addEventListener('click', () => {
-    AudioManager.playClick();
-    UI.setMode(true);
-  });
-  UI.els.modeTable.addEventListener('click', () => {
-    AudioManager.playClick();
-    UI.setMode(false);
-  });
+  // Mode toggle (table mode removed; keep guarded for safety)
+  if (UI.els.modeSimple) {
+    UI.els.modeSimple.addEventListener('click', () => {
+      AudioManager.playClick();
+      UI.setMode(true);
+    });
+  }
+  if (UI.els.modeTable) {
+    UI.els.modeTable.addEventListener('click', () => {
+      AudioManager.playClick();
+      UI.setMode(false);
+    });
+  }
   
   // Table number clicks
   document.getElementById('table-numbers')?.addEventListener('click', (e) => {
@@ -1453,52 +1448,52 @@ function setupEventListeners() {
   });
   
   // Help modal
-  document.getElementById('btn-help').addEventListener('click', () => {
+  document.getElementById('btn-help')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.showModal(UI.els.helpModal);
   });
-  document.getElementById('close-help').addEventListener('click', () => {
+  document.getElementById('close-help')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.hideModal(UI.els.helpModal);
   });
   
-  // Settings modal
-  document.getElementById('btn-settings').addEventListener('click', () => {
+  // Close help on "Got It!" button
+  const closeHelpBtn = document.getElementById('close-help-btn');
+  if(closeHelpBtn) {
+      closeHelpBtn.addEventListener('click', () => {
+          AudioManager.playClick();
+          UI.hideModal(UI.els.helpModal);
+      });
+  }
+  
+  // Settings modal (button may not exist in the header)
+  document.getElementById('btn-settings')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.showModal(UI.els.settingsModal);
   });
-  document.getElementById('close-settings').addEventListener('click', () => {
+  document.getElementById('close-settings')?.addEventListener('click', () => {
     AudioManager.playClick();
     UI.hideModal(UI.els.settingsModal);
   });
   
   // Settings controls
-  UI.els.volumeSlider.addEventListener('input', (e) => {
+  UI.els.volumeSlider?.addEventListener('input', (e) => {
     AudioManager.setVolume(e.target.value / 100);
   });
   
-  UI.els.luckyBoostToggle.addEventListener('change', (e) => {
-    game.luckyBoostEnabled = e.target.checked;
-    saveSettings();
-  });
-  
-  UI.els.highContrastToggle.addEventListener('change', (e) => {
-    game.highContrast = e.target.checked;
-    document.body.classList.toggle('high-contrast', game.highContrast);
-    saveSettings();
-  });
-  
-  UI.els.reducedMotionToggle.addEventListener('change', (e) => {
-    game.reducedMotion = e.target.checked;
-    document.body.classList.toggle('reduce-motion', game.reducedMotion);
-    saveSettings();
-  });
+  if (UI.els.reducedMotionToggle && UI.els.reducedMotionToggle.type === 'checkbox') {
+    UI.els.reducedMotionToggle.addEventListener('change', (e) => {
+      game.reducedMotion = e.target.checked;
+      document.body.classList.toggle('reduce-motion', game.reducedMotion);
+      saveSettings();
+    });
+  }
   
   // Close modals on backdrop click
-  UI.els.helpModal.addEventListener('click', (e) => {
+  UI.els.helpModal?.addEventListener('click', (e) => {
     if (e.target === UI.els.helpModal) UI.hideModal(UI.els.helpModal);
   });
-  UI.els.settingsModal.addEventListener('click', (e) => {
+  UI.els.settingsModal?.addEventListener('click', (e) => {
     if (e.target === UI.els.settingsModal) UI.hideModal(UI.els.settingsModal);
   });
   
@@ -1545,9 +1540,6 @@ function init() {
   UI.updateButtons();
   UI.setMode(true);
   UI.updateInstruction('Select a chip, then tap a bet to place it.');
-  
-  // Show sound prompt
-  UI.showSoundPrompt();
   
   // Setup events
   setupEventListeners();

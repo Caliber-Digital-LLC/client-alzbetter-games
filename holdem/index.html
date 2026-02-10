@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1a4a4a">
+  <title>Texas Hold'em</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../shared/help-modal.css">
+</head>
+<body>
+  <!-- 
+  ═══════════════════════════════════════════════════════════════════════════════
+  TUNING SECTION - Adjust these values in holdem.js:
+  ═══════════════════════════════════════════════════════════════════════════════
+  
+  GAME SETTINGS (search for "CONFIG" in holdem.js):
+  - STARTING_CHIPS: 200          // Initial chips
+  - SMALL_BLIND: 1               // Small blind amount
+  - BIG_BLIND: 2                 // Big blind amount
+  - PLAYER_FAVOR_RATE: 0.65      // 65% player favor (bots make weaker decisions)
+  
+  BOT SETTINGS:
+  - BOT_NAMES: ['Sunny', 'Max']  // Bot display names
+  - BOT_THINK_MIN: 800           // Minimum thinking time (ms)
+  - BOT_THINK_MAX: 2000          // Maximum thinking time (ms)
+  
+  VISUAL SETTINGS (in styles.css):
+  - --felt-color: #1a5a4a        // Table felt color
+  - --felt-dark: #0d3d32         // Darker felt accents
+  - --accent-gold: #d4a853       // Gold highlight color
+  
+  ═══════════════════════════════════════════════════════════════════════════════
+  -->
+
+  <div id="app" class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="header-title"><img src="/icons/poker.svg" class="title-icon" alt=""> Texas Hold'em</h1>
+      <div class="header-actions">
+        <button id="btn-sound" class="icon-btn" aria-label="Toggle Sound">
+          <svg id="icon-sound-on" class="sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <svg id="icon-sound-off" class="sound-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="22" y1="9" x2="16" y2="15"/>
+            <line x1="16" y1="9" x2="22" y2="15"/>
+          </svg>
+        </button>
+        <button id="btn-help" class="icon-btn" aria-label="Help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <path d="M12 17h.01"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chips Display -->
+    <div class="stats-bar">
+      <div class="stat-display">
+        <span class="stat-label">Your Chips</span>
+        <span id="chips-value" class="stat-value">200</span>
+      </div>
+      <div class="stat-display pot-display">
+        <span class="stat-label">Pot</span>
+        <span id="pot-value" class="stat-value">0</span>
+      </div>
+    </div>
+
+    <!-- Game Table -->
+    <main class="game-area">
+      <!-- Opponents Row -->
+      <div class="opponents-row">
+        <div class="opponent" id="opponent-0">
+          <div class="opponent-info">
+            <span class="opponent-name">Sunny</span>
+            <span class="opponent-chips">200</span>
+          </div>
+          <div class="opponent-cards">
+            <div class="card face-down small"></div>
+            <div class="card face-down small"></div>
+          </div>
+          <div class="opponent-action" id="opponent-0-action"></div>
+          <div class="dealer-button hidden" id="dealer-0">D</div>
+        </div>
+        <div class="opponent" id="opponent-1">
+          <div class="opponent-info">
+            <span class="opponent-name">Max</span>
+            <span class="opponent-chips">200</span>
+          </div>
+          <div class="opponent-cards">
+            <div class="card face-down small"></div>
+            <div class="card face-down small"></div>
+          </div>
+          <div class="opponent-action" id="opponent-1-action"></div>
+          <div class="dealer-button hidden" id="dealer-1">D</div>
+        </div>
+      </div>
+
+      <!-- Community Cards -->
+      <div class="community-section">
+        <div class="community-label">Community Cards</div>
+        <div class="community-cards" id="community-cards">
+          <div class="card-slot empty" data-index="0"></div>
+          <div class="card-slot empty" data-index="1"></div>
+          <div class="card-slot empty" data-index="2"></div>
+          <div class="card-slot empty" data-index="3"></div>
+          <div class="card-slot empty" data-index="4"></div>
+        </div>
+      </div>
+
+      <!-- Player Section -->
+      <div class="player-section">
+        <div class="player-cards" id="player-cards">
+          <div class="card empty" id="player-card-0"></div>
+          <div class="card empty" id="player-card-1"></div>
+        </div>
+        <div class="player-hand-label" id="player-hand-label"></div>
+        <div class="dealer-button hidden" id="dealer-player">D</div>
+      </div>
+
+      <!-- Current Bets Display -->
+      <div class="bets-display" id="bets-display">
+        <div class="bet-to-call hidden" id="bet-to-call">
+          <span>To Call:</span>
+          <span id="call-amount">0</span>
+        </div>
+      </div>
+
+      <!-- Result Display -->
+      <div id="result-display" class="result-display hidden">
+        <span id="result-text" class="result-text"></span>
+      </div>
+
+      <!-- Game Status -->
+      <div id="game-status" class="game-status">Tap DEAL to start</div>
+    </main>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button id="btn-fold" class="action-btn secondary" disabled>Fold</button>
+      <button id="btn-check-call" class="action-btn secondary" disabled>Check</button>
+      <button id="btn-raise" class="action-btn secondary" disabled>Raise</button>
+      <button id="btn-deal" class="action-btn primary deal-btn">DEAL</button>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal hidden">
+      <div class="modal-content">
+        <button id="close-help" class="modal-close" aria-label="Close">&times;</button>
+        <h2>How to Play</h2>
+        
+        <div class="help-section">
+          <h3>🎴 The Basics</h3>
+          <ul>
+            <li>You play against 2 friendly opponents</li>
+            <li>Each player gets 2 <strong>hole cards</strong></li>
+            <li>5 <strong>community cards</strong> are dealt on the table</li>
+            <li>Make the best 5-card hand using any combination</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🎲 Betting Rounds</h3>
+          <ul>
+            <li><strong>Pre-Flop:</strong> After hole cards are dealt</li>
+            <li><strong>Flop:</strong> After first 3 community cards</li>
+            <li><strong>Turn:</strong> After 4th community card</li>
+            <li><strong>River:</strong> After 5th community card</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🃏 Your Options</h3>
+          <ul>
+            <li><strong>Check:</strong> Pass (if no bet to match)</li>
+            <li><strong>Call:</strong> Match the current bet</li>
+            <li><strong>Raise:</strong> Increase the bet</li>
+            <li><strong>Fold:</strong> Give up your hand</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🏆 Hand Rankings</h3>
+          <ul>
+            <li>Royal Flush (best)</li>
+            <li>Straight Flush</li>
+            <li>Four of a Kind</li>
+            <li>Full House</li>
+            <li>Flush</li>
+            <li>Straight</li>
+            <li>Three of a Kind</li>
+            <li>Two Pair</li>
+            <li>One Pair</li>
+            <li>High Card (weakest)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <button id="close-settings" class="modal-close" aria-label="Close">&times;</button>
+        <h2>Settings</h2>
+        
+        <div class="setting-row">
+          <label for="volume-slider">Volume</label>
+          <input type="range" id="volume-slider" min="0" max="100" value="60" class="volume-slider">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="holdem.js"></script>
+</body>
+</html>

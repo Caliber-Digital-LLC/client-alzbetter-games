@@ -36,7 +36,6 @@ const CONFIG = {
     DEFAULT_VOLUME: 0.6,
     DEFAULT_SOUND_ENABLED: true,
     DEFAULT_TAP_MODE: true,
-    DEFAULT_HIGH_CONTRAST: false,
     DEFAULT_REDUCED_MOTION: false
 };
 
@@ -81,7 +80,6 @@ const State = {
         soundEnabled: CONFIG.DEFAULT_SOUND_ENABLED,
         volume: CONFIG.DEFAULT_VOLUME,
         tapMode: CONFIG.DEFAULT_TAP_MODE,
-        highContrast: CONFIG.DEFAULT_HIGH_CONTRAST,
         reducedMotion: CONFIG.DEFAULT_REDUCED_MOTION
     },
     
@@ -174,7 +172,6 @@ function saveSettings() {
 }
 
 function applySettings() {
-    document.body.classList.toggle('high-contrast', State.settings.highContrast);
     document.body.classList.toggle('reduced-motion', State.settings.reducedMotion);
     
     if (DOM.timerStat) {
@@ -189,7 +186,6 @@ function updateSettingsUI() {
         'toggle-timer': State.settings.timerEnabled,
         'toggle-sound': State.settings.soundEnabled,
         'toggle-tap': State.settings.tapMode,
-        'toggle-contrast': State.settings.highContrast,
         'toggle-motion': State.settings.reducedMotion
     };
     
@@ -952,7 +948,6 @@ function setupEventListeners() {
     document.getElementById('toggle-timer')?.addEventListener('click', () => toggleSetting('timerEnabled'));
     document.getElementById('toggle-sound')?.addEventListener('click', () => toggleSetting('soundEnabled'));
     document.getElementById('toggle-tap')?.addEventListener('click', () => toggleSetting('tapMode'));
-    document.getElementById('toggle-contrast')?.addEventListener('click', () => toggleSetting('highContrast'));
     document.getElementById('toggle-motion')?.addEventListener('click', () => toggleSetting('reducedMotion'));
     document.getElementById('volume-slider')?.addEventListener('input', (e) => setVolume(e.target.value));
     
