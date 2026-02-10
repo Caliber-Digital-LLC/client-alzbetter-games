@@ -250,29 +250,10 @@
           <input type="range" id="volume-slider" min="0" max="100" value="60" class="volume-slider">
         </div>
 
-        <div class="setting-row">
-          <label for="lucky-boost-toggle">Lucky Boost</label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="lucky-boost-toggle" checked>
-            <span class="toggle-slider"></span>
-          </div>
-        </div>
-
-        <div class="setting-row">
-          <label for="high-contrast-toggle">High Contrast</label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="high-contrast-toggle">
-            <span class="toggle-slider"></span>
-          </div>
-        </div>
-
-        <div class="setting-row">
-          <label for="reduced-motion-toggle">Reduce Motion</label>
-          <div class="toggle-switch">
-            <input type="checkbox" id="reduced-motion-toggle">
-            <span class="toggle-slider"></span>
-          </div>
-        </div>
+        <!-- Lucky Boost always enabled for player enjoyment -->
+        <input type="hidden" id="lucky-boost-toggle" checked>
+        <input type="hidden" id="high-contrast-toggle">
+        <input type="hidden" id="reduced-motion-toggle">
       </div>
     </div>
 

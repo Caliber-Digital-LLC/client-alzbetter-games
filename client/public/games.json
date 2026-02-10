@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-10T00:00:00Z",
+  "games": [
+    {
+      "id": "blackjack",
+      "title": "Blackjack",
+      "description": "Beat the dealer to 21!",
+      "path": "/blackjack",
+      "external": false,
+      "icon": "cards",
+      "gradient": ["#059669", "#047857"],
+      "image": "/img/blackjack.png",
+      "order": 1
+    },
+    {
+      "id": "slots",
+      "title": "Slots",
+      "description": "Spin to win with smooth animations.",
+      "path": "/slots",
+      "external": false,
+      "icon": "slot-machine",
+      "gradient": ["#7b2d8e", "#5c2d91"],
+      "image": "/img/slots.png",
+      "order": 2
+    },
+    {
+      "id": "poker",
+      "title": "Video Poker",
+      "description": "Jacks or Better video poker.",
+      "path": "/poker/",
+      "external": true,
+      "icon": "poker",
+      "gradient": ["#6b18a0", "#4a1070"],
+      "image": "/img/poker.png",
+      "order": 3
+    },
+    {
+      "id": "craps",
+      "title": "Craps",
+      "description": "Roll the dice in this casino classic.",
+      "path": "/craps/",
+      "external": true,
+      "icon": "dice",
+      "gradient": ["#d97706", "#b45309"],
+      "image": "/img/craps.png",
+      "order": 4
+    },
+    {
+      "id": "roulette",
+      "title": "Roulette",
+      "description": "Spin the wheel and test your luck!",
+      "path": "/roulette/",
+      "external": true,
+      "icon": "roulette",
+      "gradient": ["#dc2626", "#991b1b"],
+      "image": "/img/roulette.png",
+      "order": 5
+    }
+  ]
+}

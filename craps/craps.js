@@ -68,7 +68,7 @@ const game = {
   // Settings
   soundEnabled: true,
   audioUnlocked: false,
-  luckyBoostEnabled: CONFIG.LUCKY_BOOST_ENABLED,
+  luckyBoostEnabled: true, // Always enabled for player enjoyment
   reducedMotion: false,
   highContrast: false,
   volume: 0.6,

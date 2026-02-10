@@ -79,9 +79,9 @@ const game = {
   autoPlayTimer: null,
   
   // Settings
-  soundEnabled: false,
+  soundEnabled: true,
   audioUnlocked: false,
-  luckyBoostEnabled: CONFIG.LUCKY_BOOST_ENABLED,
+  luckyBoostEnabled: true, // Always enabled for player enjoyment
   reducedMotion: false,
   highContrast: false,
   volume: 0.6,
@@ -1299,8 +1299,8 @@ function init() {
   UI.updateDealButton();
   UI.updateInstruction('Set your bet, then tap DEAL.');
   
-  // Show sound prompt
-  UI.showSoundPrompt();
+  // Hide sound prompt (sound enabled by default)
+  UI.hideSoundPrompt();
   
   // Setup events
   setupEventListeners();
