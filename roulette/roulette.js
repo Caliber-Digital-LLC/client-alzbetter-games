@@ -469,16 +469,31 @@ const AudioManager = {
       console.warn('WebAudio not supported');
     }
   },
-  
-  async unlock() {
+
+  ensureUnlocked() {
     if (!this.ctx) this.init();
-    if (this.ctx && this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+
+    try {
+      if (this.ctx && this.ctx.state === 'suspended') {
+        const resumePromise = this.ctx.resume();
+        if (resumePromise && typeof resumePromise.catch === 'function') {
+          resumePromise.catch(() => {});
+        }
+      }
+    } catch (e) {
+      // Ignore resume errors
     }
+
     game.audioUnlocked = true;
+    UI.hideSoundPrompt();
+  },
+  
+  unlock() {
+    // Explicitly enable sound
+    this.ensureUnlocked();
     game.soundEnabled = true;
     UI.updateSoundIcon();
-    UI.hideSoundPrompt();
+    saveSettings();
   },
   
   setVolume(vol) {
@@ -656,6 +671,8 @@ const AudioManager = {
 
 const UI = {
   els: {},
+  resultAutoHideTimer: null,
+  resultFadeTimer: null,
   
   init() {
     this.els = {
@@ -691,8 +708,6 @@ const UI = {
       pickLast: document.getElementById('pick-last'),
       pickZero: document.getElementById('pick-zero'),
       addStraight: document.getElementById('add-straight'),
-      toggleGrid: document.getElementById('toggle-grid'),
-      numberGrid: document.getElementById('number-grid'),
       
       // Buttons
       btnClear: document.getElementById('btn-clear'),
@@ -718,30 +733,8 @@ const UI = {
       volumeSlider: document.getElementById('volume-slider'),
       reducedMotionToggle: document.getElementById('reduced-motion-toggle'),
     };
-    
-    this.generateNumberGrid();
+
     this.generateTableNumbers();
-  },
-  
-  generateNumberGrid() {
-    const grid = this.els.numberGrid;
-    grid.innerHTML = '';
-    
-    // Zero first (spans 2 columns)
-    const zeroBtn = document.createElement('button');
-    zeroBtn.className = 'grid-num green';
-    zeroBtn.textContent = '0';
-    zeroBtn.dataset.num = '0';
-    grid.appendChild(zeroBtn);
-    
-    // Numbers 1-36
-    for (let i = 1; i <= 36; i++) {
-      const btn = document.createElement('button');
-      btn.className = `grid-num ${getNumberColor(i)}`;
-      btn.textContent = i.toString();
-      btn.dataset.num = i.toString();
-      grid.appendChild(btn);
-    }
   },
   
   generateTableNumbers() {
@@ -784,11 +777,35 @@ const UI = {
     numEl.className = `selected-number ${color}`;
     numEl.querySelector('.num-value').textContent = game.straightNumber;
     numEl.querySelector('.num-color').textContent = getNumberColorName(game.straightNumber);
-    
-    // Update grid selection
-    document.querySelectorAll('.grid-num').forEach(btn => {
-      btn.classList.toggle('selected', parseInt(btn.dataset.num) === game.straightNumber);
-    });
+  },
+
+  cancelAutoHideResults() {
+    if (this.resultAutoHideTimer) {
+      clearTimeout(this.resultAutoHideTimer);
+      this.resultAutoHideTimer = null;
+    }
+    if (this.resultFadeTimer) {
+      clearTimeout(this.resultFadeTimer);
+      this.resultFadeTimer = null;
+    }
+    this.els.resultDisplay?.classList.remove('fade-away');
+    this.els.winDisplay?.classList.remove('fade-away');
+  },
+
+  scheduleAutoHideResults() {
+    this.cancelAutoHideResults();
+
+    this.resultAutoHideTimer = setTimeout(() => {
+      this.els.resultDisplay?.classList.add('fade-away');
+      this.els.winDisplay?.classList.add('fade-away');
+
+      this.resultFadeTimer = setTimeout(() => {
+        this.hideResult();
+        this.hideWin();
+        this.els.resultDisplay?.classList.remove('fade-away');
+        this.els.winDisplay?.classList.remove('fade-away');
+      }, 260);
+    }, 5000);
   },
   
   updateBetTiles() {
@@ -871,10 +888,13 @@ const UI = {
     this.els.resultNumber.textContent = number;
     this.els.resultNumber.className = `result-number ${color}`;
     this.els.resultColor.textContent = getNumberColorName(number);
+    this.els.resultDisplay.classList.remove('fade-away');
     this.els.resultDisplay.classList.remove('hidden');
+    this.scheduleAutoHideResults();
   },
   
   hideResult() {
+    this.els.resultDisplay.classList.remove('fade-away');
     this.els.resultDisplay.classList.add('hidden');
   },
   
@@ -901,10 +921,13 @@ const UI = {
       this.els.winBreakdown.textContent = '';
     }
     
+    this.els.winDisplay.classList.remove('fade-away');
     this.els.winDisplay.classList.remove('hidden');
+    this.scheduleAutoHideResults();
   },
   
   hideWin() {
+    this.els.winDisplay.classList.remove('fade-away');
     this.els.winDisplay.classList.add('hidden');
   },
   
@@ -929,17 +952,7 @@ const UI = {
       this.els.tableBets.classList.toggle('hidden', effectiveSimple);
     }
   },
-  
-  toggleNumberGrid() {
-    const grid = this.els.numberGrid;
-    const toggle = this.els.toggleGrid;
-    const isHidden = grid.classList.contains('hidden');
-    
-    grid.classList.toggle('hidden', !isHidden);
-    toggle.textContent = isHidden ? 'Hide Number Grid ▲' : 'Show Number Grid ▼';
-    toggle.setAttribute('aria-expanded', isHidden);
-  },
-  
+
   showBall() {
     this.els.ballMarker.classList.remove('hidden');
   },
@@ -947,15 +960,15 @@ const UI = {
   hideBall() {
     this.els.ballMarker.classList.add('hidden');
   },
-  
+
   positionBall(x, y) {
     const container = document.querySelector('.wheel-container');
-    const rect = container.getBoundingClientRect();
-    
+    if (!container) return;
+
     this.els.ballMarker.style.left = `${x}px`;
     this.els.ballMarker.style.top = `${y}px`;
   },
-  
+
   showGameOver() {
     this.els.gameoverOverlay.classList.remove('hidden');
   },
@@ -1066,8 +1079,37 @@ async function spin() {
   
   // Calculate target rotation to land on result
   const segmentAngle = (Math.PI * 2) / WHEEL_NUMBERS.length;
-  const targetSegment = resultIndex * segmentAngle;
-  const totalRotation = CONFIG.SPIN_ROTATIONS * Math.PI * 2 + targetSegment;
+  
+  // 1. Calculate final Wheel Rotation (randomized stop)
+  const randomOffset = Math.random() * Math.PI * 2;
+  const wheelDelta = CONFIG.SPIN_ROTATIONS * Math.PI * 2 + randomOffset;
+  const endRotation = startRotation + wheelDelta;
+  
+  // 2. Calculate where the winning number is at the end
+  // The number lies at: Rotation + Index*Segment - PI/2
+  const resultAngle = resultIndex * segmentAngle;
+  const finalNumberScreenAngle = endRotation + resultAngle - Math.PI / 2;
+  
+  // 3. Calculate Ball trajectory
+  // Ball starts at: -startRotation * 1.5 - PI/2
+  const startBallAngle = -startRotation * 1.5 - Math.PI / 2;
+  
+  // Ball must end at finalNumberScreenAngle (aligned with number)
+  // But strictly less than startBallAngle (CCW motion)
+  // and essentially maintaining the ~1.5x relative velocity ratio
+  let endBallAngle = finalNumberScreenAngle;
+  
+  // Approximate desired delta based on Ratio 1.5
+  const approxBallDelta = -wheelDelta * 1.5;
+  const targetBallAngleRaw = startBallAngle + approxBallDelta;
+  
+  // Find closest equivalent angle to targetBallAngleRaw that equals finalNumberScreenAngle (mod 2PI)
+  // We want: endBallAngle = finalNumberScreenAngle + k * 2PI ≈ targetBallAngleRaw
+  // k ≈ (targetBallAngleRaw - finalNumberScreenAngle) / 2PI
+  const k = Math.round((targetBallAngleRaw - finalNumberScreenAngle) / (Math.PI * 2));
+  endBallAngle = finalNumberScreenAngle + k * Math.PI * 2;
+  
+  const ballDelta = endBallAngle - startBallAngle;
   
   UI.showBall();
   
@@ -1082,7 +1124,7 @@ async function spin() {
     const eased = 1 - Math.pow(1 - progress, 3);
     
     // Update wheel rotation
-    game.wheelRotation = startRotation + totalRotation * eased;
+    game.wheelRotation = startRotation + wheelDelta * eased;
     WheelRenderer.draw(game.wheelRotation);
     
     // Ball position (orbits faster at start, slows down)
@@ -1097,10 +1139,12 @@ async function spin() {
     const radius = Math.min(centerX, centerY) - 10;
     
     const ballOrbitRadius = radius * (0.9 - 0.32 * ballEased);
-    const ballAngle = -game.wheelRotation * 1.5 - Math.PI / 2;
     
-    const ballX = centerX + Math.cos(ballAngle) * ballOrbitRadius - 8;
-    const ballY = centerY + Math.sin(ballAngle) * ballOrbitRadius - 8;
+    // Use calculated ball angle trajectory
+    const currentBallAngle = startBallAngle + ballDelta * eased;
+    
+    const ballX = centerX + Math.cos(currentBallAngle) * ballOrbitRadius - 8;
+    const ballY = centerY + Math.sin(currentBallAngle) * ballOrbitRadius - 8;
     UI.positionBall(ballX, ballY);
     
     // Ball clicking sound
@@ -1232,6 +1276,8 @@ function handleTableNumberClick(num) {
 
 function handleClear() {
   if (game.state !== GameState.BETTING) return;
+
+  UI.cancelAutoHideResults();
   
   // Return bets to credits
   game.credits += getTotalBet();
@@ -1246,6 +1292,7 @@ function handleClear() {
 }
 
 function handleRebet() {
+  UI.cancelAutoHideResults();
   if (rebet()) {
     AudioManager.playChipPlace();
     UI.updateCredits();
@@ -1312,7 +1359,6 @@ function resetCredits() {
 
 function saveSettings() {
   const settings = {
-    soundEnabled: game.soundEnabled,
     volume: game.volume,
     reducedMotion: game.reducedMotion,
     selectedChip: game.selectedChip,
@@ -1324,10 +1370,25 @@ function saveSettings() {
   } catch (e) {
     // Storage unavailable
   }
+
+  // Match Slots/Blackjack sound preference key
+  try {
+    localStorage.setItem('casino-sound-enabled', game.soundEnabled ? 'true' : 'false');
+  } catch (e) {
+    // Storage unavailable
+  }
 }
 
 function loadSettings() {
   try {
+    // Match Slots/Blackjack sound preference key
+    const savedSound = localStorage.getItem('casino-sound-enabled');
+    if (savedSound === 'false') {
+      game.soundEnabled = false;
+    } else if (savedSound === 'true') {
+      game.soundEnabled = true;
+    }
+
     const saved = localStorage.getItem('rouletteSettings');
     if (saved) {
       const settings = JSON.parse(saved);
@@ -1335,6 +1396,11 @@ function loadSettings() {
       game.reducedMotion = settings.reducedMotion ?? false;
       game.selectedChip = settings.selectedChip ?? CONFIG.DEFAULT_CHIP;
       game.lastBets = settings.lastBets ?? {};
+
+      // Back-compat: older roulette settings may have saved soundEnabled
+      if (savedSound !== 'false' && savedSound !== 'true' && typeof settings.soundEnabled === 'boolean') {
+        game.soundEnabled = settings.soundEnabled;
+      }
       
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         game.reducedMotion = true;
@@ -1352,11 +1418,8 @@ function loadSettings() {
 function setupEventListeners() {
   // Sound toggle
   UI.els.btnSound.addEventListener('click', () => {
-    if (!game.audioUnlocked) {
-      AudioManager.unlock();
-      return;
-    }
     game.soundEnabled = !game.soundEnabled;
+    AudioManager.ensureUnlocked();
     UI.updateSoundIcon();
     if (game.soundEnabled) AudioManager.playClick();
     saveSettings();
@@ -1388,14 +1451,7 @@ function setupEventListeners() {
   UI.els.pickLast.addEventListener('click', pickLastWin);
   UI.els.pickZero.addEventListener('click', () => selectNumber(0));
   
-  // Number grid
-  UI.els.toggleGrid.addEventListener('click', () => UI.toggleNumberGrid());
-  UI.els.numberGrid.addEventListener('click', (e) => {
-    const btn = e.target.closest('.grid-num');
-    if (btn) {
-      selectNumber(parseInt(btn.dataset.num));
-    }
-  });
+  // Number grid UI removed
   
   // Mode toggle (table mode removed; keep guarded for safety)
   if (UI.els.modeSimple) {
@@ -1435,9 +1491,8 @@ function setupEventListeners() {
   UI.els.btnClear.addEventListener('click', handleClear);
   UI.els.btnRebet.addEventListener('click', handleRebet);
   UI.els.btnSpin.addEventListener('click', () => {
-    if (!game.audioUnlocked) {
-      AudioManager.unlock();
-    }
+    UI.cancelAutoHideResults();
+    AudioManager.ensureUnlocked();
     spin();
   });
   
@@ -1525,6 +1580,16 @@ function init() {
   UI.init();
   loadSettings();
   UI.applySettings();
+  UI.updateSoundIcon();
+
+  // Match Slots/Blackjack: sound on by default, init/unlock WebAudio on first user gesture
+  if (game.soundEnabled) {
+    const initAudioOnInteraction = () => {
+      AudioManager.ensureUnlocked();
+    };
+    document.addEventListener('pointerdown', initAudioOnInteraction, { once: true, passive: true });
+    document.addEventListener('keydown', initAudioOnInteraction, { once: true });
+  }
   
   AudioManager.init();
   AudioManager.masterVolume = game.volume;

@@ -1,0 +1,237 @@
+/**
+ * Change Word - Game Specific Styles
+ * Builds on shared casino-theme.css and casino-components.css
+ */
+
+/* ============================================================================
+   GAME CONTAINER
+   ============================================================================ */
+.game-container {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ============================================================================
+   CANVAS CONTAINER
+   ============================================================================ */
+#mainHolder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 0; /* Important for flex children */
+}
+
+#canvasHolder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#gameCanvas {
+    display: block;
+    position: relative;
+    /* Sizing handled by game JS */
+}
+
+/* ============================================================================
+   LOADER
+   ============================================================================ */
+#mainLoader {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+#mainLoader img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: var(--space-lg);
+    animation: spin 2s linear infinite;
+}
+
+#mainLoader span {
+    font-size: var(--font-size-2xl);
+    color: var(--accent-gold);
+    margin-top: var(--space-md);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   NOT SUPPORTED MESSAGE
+   ============================================================================ */
+#notSupportHolder {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    padding: var(--space-xl);
+}
+
+#notSupportHolder.show {
+    display: flex;
+}
+
+.notSupport {
+    background: var(--bg-card);
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--text-primary);
+    font-size: var(--font-size-lg);
+    max-width: 400px;
+    line-height: 1.6;
+}
+
+/* ============================================================================
+   STATS BAR CUSTOMIZATION
+   ============================================================================ */
+.stats-bar {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-width: 80px;
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--accent-gold);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   HELP MODAL CUSTOMIZATION
+   ============================================================================ */
+#helpModal .rules-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+#helpModal .rules-section li {
+    padding-left: var(--space-lg);
+    position: relative;
+}
+
+#helpModal .rules-section li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--accent-gold);
+    font-weight: bold;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+@media (max-width: 768px) {
+    .header-title {
+        font-size: var(--font-size-md);
+    }
+    
+    .title-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .stats-bar {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .stat-value {
+        font-size: var(--font-size-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-item {
+        min-width: 60px;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+    }
+    
+    .stat-value {
+        font-size: var(--font-size-md);
+    }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+.hidden {
+    display: none !important;
+}
+
+.invisible {
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* ============================================================================
+   SOUND BUTTON STATES
+   ============================================================================ */
+.icon-btn .sound-on-icon,
+.icon-btn .sound-off-icon {
+    transition: opacity var(--transition-fast);
+}
+
+#soundBtn.sound-on .sound-off-icon,
+#soundBtn.sound-off .sound-on-icon {
+    display: none;
+}
+
+#soundBtn.sound-on .sound-on-icon {
+    color: var(--accent-gold);
+}
+
+#soundBtn.sound-off .sound-off-icon {
+    color: var(--text-muted);
+}

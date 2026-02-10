@@ -1,103 +1,153 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Change Word</title>
-        
-        <meta name="Title" content="Change Word" />
-        <meta name="description" content="Change Word is a HTML5 game where you have to transform words by replacing one letter at a time, keep changing as many words as you can to stay alive and beat high score.">
-		<meta name="keywords" content="change, morph, transform, hint, form, word, letter, challenge, timer, puzzles, brain, thinking">
-        
-        <!-- for Facebook -->
-        <meta property="og:title" content="Change Word"/>
-        <meta property="og:site_name" content="Change Word"/>
-        <meta property="og:image" content="http://demonisblack.com/code/2022/changeword/game/share.jpg" />
-        <meta property="og:url" content="http://demonisblack.com/code/2022/changeword/game/" />
-        <meta property="og:description" content="Change Word is a HTML5 game where you have to transform words by replacing one letter at a time, keep changing as many words as you can to stay alive and beat high score.">
-        
-        <!-- for Twitter -->
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="Change Word" />
-        <meta name="twitter:description" content="Change Word is a HTML5 game where you have to transform words by replacing one letter at a time, keep changing as many words as you can to stay alive and beat high score." />
-        <meta name="twitter:image" content="http://demonisblack.com/code/2022/changeword/game/share.jpg" />
-        
-        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<script type="text/javascript">
-        (function() {
-            if (!navigator.userAgent) {
-                Object.defineProperty(navigator, 'userAgent', {
-                    value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15',
-                    configurable: true,
-                    enumerable: true,
-                    writable: false
-                });
-            }
-        })();
-    </script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Change Word - AlzBetter Games</title>
+    
+    <meta name="description" content="Change Word is a HTML5 game where you have to transform words by replacing one letter at a time, keep changing as many words as you can to stay alive and beat high score.">
+    <meta name="keywords" content="change, morph, transform, hint, form, word, letter, challenge, timer, puzzles, brain, thinking">
+    
+    <!-- Shared Casino Theme -->
+    <link rel="stylesheet" href="../shared/casino-theme.css">
+    <link rel="stylesheet" href="../shared/casino-components.css">
+    <link rel="stylesheet" href="../shared/help-modal.css">
+    
+    <!-- Game Specific Styles -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
+    <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="header-title"><img src="/icons/wordchange.svg" class="title-icon" alt=""> Change Word</h1>
+            <div class="header-actions">
+                <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">
+                    <svg class="sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    </svg>
+                    <svg class="sound-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <line x1="22" y1="9" x2="16" y2="15"/>
+                        <line x1="16" y1="9" x2="22" y2="15"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="helpBtn" aria-label="Help">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <path d="M12 17h.01"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
 
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Score</span>
+                <span class="stat-value" id="gameScore">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Words</span>
+                <span class="stat-value" id="gameWords">0</span>
+            </div>
+        </div>
 
-		<script>
-        if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
-            var msViewportStyle = document.createElement("style");
-            msViewportStyle.appendChild(
-                document.createTextNode(
-                    "@-ms-viewport{width:device-width}"
-                )
-            );
-            document.getElementsByTagName("head")[0].
-                appendChild(msViewportStyle);
-        }
-        </script>
-
-        <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
-        <link rel="stylesheet" href="css/normalize.css">
-        <link rel="stylesheet" href="css/main.css">
-        <script src="js/vendor/modernizr-2.6.2.min.js"></script>
-    </head>
-    <body>
-        <!-- PERCENT LOADER START-->
-    	<div id="mainLoader"><img src="assets/loader.png" /><br/><span>0</span></div>
-        <!-- PERCENT LOADER END-->
+        <!-- PERCENT LOADER -->
+        <div id="mainLoader"><img src="assets/loader.png" /><br/><span>0</span></div>
         
-        <!-- CONTENT START-->
+        <!-- CONTENT -->
         <div id="mainHolder">
-        
-        	<!-- BROWSER NOT SUPPORT START-->
-        	<div id="notSupportHolder">
+            <!-- BROWSER NOT SUPPORT -->
+            <div id="notSupportHolder">
                 <div class="notSupport">Your browser isn't supported.<br/>Please update your browser in order to run the game.</div>
             </div>
-            <!-- BROWSER NOT SUPPORT END-->
             
-            <!-- CANVAS START-->
+            <!-- CANVAS -->
             <div id="canvasHolder">
                 <canvas id="gameCanvas" width="1280" height="768"></canvas>
             </div>
-            <!-- CANVAS END-->
-            
         </div>
-        <!-- CONTENT END-->
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>How to Play</h2>
+                <button class="icon-btn" id="closeHelpBtn" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="rules-section">
+                    <h3>Goal</h3>
+                    <p>Transform words by changing one letter at a time. Keep changing words to stay alive and beat your high score!</p>
+                </div>
+                <div class="rules-section">
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li>Choose a category: 3, 4, 5, or 6 letter words</li>
+                        <li>Drag letters from the bottom to replace letters in the word</li>
+                        <li>Form valid new words before time runs out</li>
+                        <li>Each word you create extends your time</li>
+                    </ul>
+                </div>
+                <div class="rules-section">
+                    <h3>Power-Ups</h3>
+                    <ul>
+                        <li><strong>Hint:</strong> Shows one letter of a possible word</li>
+                        <li><strong>Full Hint:</strong> Reveals an entire possible word</li>
+                        <li><strong>Reset:</strong> Gets a completely new starting word</li>
+                    </ul>
+                </div>
+                <div class="rules-section">
+                    <h3>Tips</h3>
+                    <ul>
+                        <li>Start with shorter words to learn the mechanics</li>
+                        <li>Look for common word patterns and endings</li>
+                        <li>Don't waste time — the timer keeps ticking!</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="gotItBtn">Got It!</button>
+            </div>
+        </div>
+    </div>
         
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery.min.js"><\/script>')</script>
-        
-        <script src="js/vendor/detectmobilebrowser.js"></script>
-        <script src="js/vendor/createjs.min.js"></script>
-		<script src="js/vendor/TweenMax.min.js"></script>
-        
-        <script src="js/plugins.js"></script>
-        <script src="js/sound.js"></script>
-        <script src="js/canvas.js"></script>
-        <script src="js/game.js"></script>
-        <script src="js/mobile.js"></script>
-        <script src="js/main.js"></script>
-        <script src="js/loader.js"></script>
-        <script src="js/init.js"></script>
-    </body>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="js/vendor/jquery.min.js"><\/script>')</script>
     
+    <script src="js/vendor/detectmobilebrowser.js"></script>
+    <script src="js/vendor/createjs.min.js"></script>
+    <script src="js/vendor/TweenMax.min.js"></script>
+    
+    <script src="js/plugins.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/mobile.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/loader.js"></script>
+    <script src="js/init.js"></script>
+    <script src="../shared/casino-utils.js"></script>
+    <script src="ui-integration.js"></script>
+</body>
+</html>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-8T0P6RD5H3"></script>
     <script>
