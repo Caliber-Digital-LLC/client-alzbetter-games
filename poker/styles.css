@@ -1158,16 +1158,15 @@ input[type="range"] {
 
 @media (min-width: 768px) {
   :root {
-    --card-width: clamp(70px, 12vw, 100px);
+    --card-width: clamp(80px, 14vw, 120px);
   }
   
   .game-area {
-    max-width: 800px;
-    margin: 0 auto;
+    padding: var(--space-lg);
   }
   
   .cards-area {
-    gap: var(--space-md);
+    gap: var(--space-lg);
   }
 }
 
@@ -1175,11 +1174,13 @@ input[type="range"] {
   .game-area {
     flex-direction: row;
     flex-wrap: wrap;
-    max-width: 1000px;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--space-xl);
   }
   
   .paytable-container {
-    flex: 0 0 220px;
+    flex: 0 0 280px;
     order: 2;
   }
   
@@ -1201,7 +1202,8 @@ input[type="range"] {
   }
   
   .cards-container {
-    flex: 1;
+    flex: 1 1 auto;
+    max-width: 800px;
     order: 1;
   }
   
@@ -1216,16 +1218,20 @@ input[type="range"] {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @media (min-width: 1024px) {
-  .app-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    min-height: 100vh;
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  :root {
+    --card-width: clamp(100px, 10vw, 130px);
   }
   
-  :root {
-    --card-width: 100px;
+  .game-area {
+    padding: var(--space-xl);
+  }
+  
+  .paytable-container {
+    flex: 0 0 320px;
+  }
+  
+  .cards-container {
+    max-width: 1000px;
   }
 }
 
