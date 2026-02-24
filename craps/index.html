@@ -78,6 +78,9 @@
 
     <!-- Main Game Area -->
     <main class="game-area">
+      <!-- Backdrop for overlays (used by More Bets) -->
+      <div id="more-bets-backdrop" class="more-bets-backdrop hidden" aria-hidden="true"></div>
+
       <!-- Phase & Point Display -->
       <div class="phase-display">
         <div id="phase-label" class="phase-label">Come-Out Roll</div>
@@ -129,11 +132,6 @@
         </div>
 
         <!-- More Bets Toggle -->
-        <button id="more-bets-toggle" class="more-bets-toggle">
-          <span>More Bets</span>
-          <svg id="chevron-icon" viewBox="0 0 24 24" fill="currentColor" class="chevron"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
-        </button>
-
         <!-- Expandable Bets -->
         <div id="more-bets" class="more-bets collapsed">
           <!-- Don't Pass Bet -->
@@ -173,10 +171,10 @@
       <button id="btn-roll" class="action-btn primary roll-btn">
         <span class="roll-text">ROLL</span>
       </button>
-      <div class="auto-roll-toggle">
-        <input type="checkbox" id="auto-roll" class="toggle-input">
-        <label for="auto-roll" class="toggle-label">Auto</label>
-      </div>
+      <button id="btn-more-bets" class="action-btn secondary more-bets-btn" aria-expanded="false">
+        <span>More Bets</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" class="chevron"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+      </button>
     </div>
 
     <!-- Result Overlay -->

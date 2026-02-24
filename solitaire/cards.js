@@ -106,74 +106,65 @@ const Cards = (function() {
     // ========================================================================
     // SVG CARD RENDERING
     // ========================================================================
+    // All cards use a fixed internal viewBox of 100×140 for consistent proportions.
+    // The SVG is set to width="100%" height="100%" so CSS controls actual display size.
     
-    function createCardSVG(card, width = 90, height = 126) {
+    function createCardSVG(card) {
         const color = SUIT_COLORS[card.suit];
         const symbol = SUIT_SYMBOLS[card.suit];
         const rank = card.rank;
         
-        // Adjust font sizes based on card size
-        const rankFontSize = Math.round(width * 0.22);
-        const suitFontSize = Math.round(width * 0.18);
-        const centerPipSize = Math.round(width * 0.35);
-        const smallPipSize = Math.round(width * 0.15);
-        const cornerOffset = Math.round(width * 0.08);
-        const radius = Math.round(width * 0.08);
+        // Fixed internal coordinate space
+        const VW = 100, VH = 140;
         
         let centerContent = '';
         
-        // For face cards, show large rank in center
         if (['J', 'Q', 'K'].includes(rank)) {
+            // Face cards: large rank letter centred in upper portion,
+            // suit symbol centred in lower portion — well-separated, no overlap.
             centerContent = `
-                <text x="${width/2}" y="${height/2 + rankFontSize * 0.35}" 
-                    font-size="${rankFontSize * 1.8}" font-weight="bold" 
-                    text-anchor="middle" fill="${color}">${rank}</text>
-                <text x="${width/2}" y="${height/2 + rankFontSize * 0.9}" 
-                    font-size="${centerPipSize * 0.8}" 
-                    text-anchor="middle" fill="${color}">${symbol}</text>
+                <text x="50" y="72" font-size="52" font-weight="bold"
+                    text-anchor="middle" dominant-baseline="middle"
+                    fill="${color}" font-family="Georgia, 'Times New Roman', serif">${rank}</text>
+                <text x="50" y="110" font-size="26"
+                    text-anchor="middle" dominant-baseline="middle"
+                    fill="${color}">${symbol}</text>
             `;
         } else if (rank === 'A') {
-            // Ace - large center pip
+            // Ace: single large centred suit symbol
             centerContent = `
-                <text x="${width/2}" y="${height/2 + centerPipSize * 0.35}" 
-                    font-size="${centerPipSize * 1.5}" 
-                    text-anchor="middle" fill="${color}">${symbol}</text>
+                <text x="50" y="78" font-size="60"
+                    text-anchor="middle" dominant-baseline="middle"
+                    fill="${color}">${symbol}</text>
             `;
         } else {
-            // Number cards - pip pattern
-            centerContent = generatePipPattern(rank, symbol, color, width, height, smallPipSize);
+            // Number cards: pip grid that stays safely inside the pip zone
+            centerContent = generatePipPattern(rank, symbol, color);
         }
         
         const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" 
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VW} ${VH}"
                  width="100%" height="100%">
-                <defs>
-                    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
-                        <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15"/>
-                    </filter>
-                </defs>
-                
                 <!-- Card background -->
-                <rect x="1" y="1" width="${width-2}" height="${height-2}" 
-                    rx="${radius}" fill="var(--card-front, #fefefe)" 
-                    stroke="var(--card-border, rgba(0,0,0,0.1))" stroke-width="1"
-                    filter="url(#cardShadow)"/>
-                
-                <!-- Top-left corner -->
-                <text x="${cornerOffset}" y="${cornerOffset + rankFontSize * 0.8}" 
-                    font-size="${rankFontSize}" font-weight="bold" fill="${color}">${rank}</text>
-                <text x="${cornerOffset}" y="${cornerOffset + rankFontSize + suitFontSize * 0.7}" 
-                    font-size="${suitFontSize}" fill="${color}">${symbol}</text>
-                
-                <!-- Bottom-right corner (rotated) -->
-                <g transform="rotate(180 ${width/2} ${height/2})">
-                    <text x="${cornerOffset}" y="${cornerOffset + rankFontSize * 0.8}" 
-                        font-size="${rankFontSize}" font-weight="bold" fill="${color}">${rank}</text>
-                    <text x="${cornerOffset}" y="${cornerOffset + rankFontSize + suitFontSize * 0.7}" 
-                        font-size="${suitFontSize}" fill="${color}">${symbol}</text>
+                <rect x="1" y="1" width="${VW - 2}" height="${VH - 2}"
+                    rx="7" fill="var(--card-front, #fefefe)"
+                    stroke="var(--card-border, rgba(0,0,0,0.12))" stroke-width="1"/>
+
+                <!-- Top-left corner: rank then suit -->
+                <text x="6" y="20" font-size="19" font-weight="bold"
+                    fill="${color}" font-family="Arial, Helvetica, sans-serif">${rank}</text>
+                <text x="7" y="36" font-size="16" font-weight="bold"
+                    fill="${color}" font-family="Arial, Helvetica, sans-serif">${symbol}</text>
+
+                <!-- Bottom-right corner: rotated 180° around the card centre -->
+                <g transform="rotate(180 50 70)">
+                    <text x="6" y="20" font-size="19" font-weight="bold"
+                        fill="${color}" font-family="Arial, Helvetica, sans-serif">${rank}</text>
+                    <text x="7" y="36" font-size="16" font-weight="bold"
+                        fill="${color}" font-family="Arial, Helvetica, sans-serif">${symbol}</text>
                 </g>
-                
-                <!-- Center content -->
+
+                <!-- Centre content -->
                 ${centerContent}
             </svg>
         `;
@@ -181,67 +172,65 @@ const Cards = (function() {
         return svg;
     }
     
-    function generatePipPattern(rank, symbol, color, width, height, pipSize) {
+    // Pip positions are expressed in the fixed 100×140 coordinate space.
+    // Pip zone: roughly y = 48–122 (clear of both corner text areas).
+    // Pips at leftX/rightX (x = 32/68) do NOT overlap the corner text (x ≤ 26).
+    function generatePipPattern(rank, symbol, color) {
         const value = parseInt(rank) || 0;
         const pips = [];
-        const cx = width / 2;
-        const topY = height * 0.25;
-        const midY = height * 0.5;
-        const botY = height * 0.75;
-        const leftX = width * 0.28;
-        const rightX = width * 0.72;
+        const cx = 50, L = 32, R = 68;
+        // y anchor rows
+        const t  = 54,  tm = 69,  m  = 83,  bm = 97,  b  = 112;
+        const PIP = 22; // font-size for pip symbols (larger for readability)
         
-        // Pip positions for each card value
-        const positions = {
-            2: [[cx, topY], [cx, botY]],
-            3: [[cx, topY], [cx, midY], [cx, botY]],
-            4: [[leftX, topY], [rightX, topY], [leftX, botY], [rightX, botY]],
-            5: [[leftX, topY], [rightX, topY], [cx, midY], [leftX, botY], [rightX, botY]],
-            6: [[leftX, topY], [rightX, topY], [leftX, midY], [rightX, midY], [leftX, botY], [rightX, botY]],
-            7: [[leftX, topY], [rightX, topY], [cx, height * 0.37], [leftX, midY], [rightX, midY], [leftX, botY], [rightX, botY]],
-            8: [[leftX, topY], [rightX, topY], [cx, height * 0.37], [leftX, midY], [rightX, midY], [cx, height * 0.63], [leftX, botY], [rightX, botY]],
-            9: [[leftX, height * 0.22], [rightX, height * 0.22], [leftX, height * 0.39], [rightX, height * 0.39], [cx, midY], [leftX, height * 0.61], [rightX, height * 0.61], [leftX, height * 0.78], [rightX, height * 0.78]],
-            10: [[leftX, height * 0.2], [rightX, height * 0.2], [cx, height * 0.32], [leftX, height * 0.38], [rightX, height * 0.38], [leftX, height * 0.62], [rightX, height * 0.62], [cx, height * 0.68], [leftX, height * 0.8], [rightX, height * 0.8]]
+        // Pip positions keyed by card value.
+        // Using dominant-baseline="middle" so y is the visual centre of each pip.
+        const pipMap = {
+            2:  [[cx,t],                                  [cx,b]],
+            3:  [[cx,t],           [cx,m],                [cx,b]],
+            4:  [[L,t],[R,t],                             [L,b],[R,b]],
+            5:  [[L,t],[R,t],      [cx,m],                [L,b],[R,b]],
+            6:  [[L,t],[R,t],      [L,m],[R,m],           [L,b],[R,b]],
+            7:  [[L,t],[R,t],[cx,tm],  [L,m],[R,m],       [L,b],[R,b]],
+            8:  [[L,t],[R,t],[cx,tm],  [L,m],[R,m],[cx,bm],[L,b],[R,b]],
+            9:  [[L,50],[R,50],[L,67],[R,67],[cx,m],[L,99],[R,99],[L,116],[R,116]],
+            10: [[L,50],[R,50],[cx,63],[L,72],[R,72],[L,95],[R,95],[cx,107],[L,116],[R,116]]
         };
         
-        const coords = positions[value] || [];
+        const coords = pipMap[value] || [];
         coords.forEach(([x, y]) => {
-            pips.push(`<text x="${x}" y="${y + pipSize * 0.35}" 
-                font-size="${pipSize}" text-anchor="middle" fill="${color}">${symbol}</text>`);
+            pips.push(
+                `<text x="${x}" y="${y}" font-size="${PIP}"` +
+                ` text-anchor="middle" dominant-baseline="middle"` +
+                ` fill="${color}">${symbol}</text>`
+            );
         });
         
         return pips.join('\n');
     }
     
-    function createCardBackSVG(width = 90, height = 126) {
-        const radius = Math.round(width * 0.08);
-        const patternSize = Math.round(width * 0.12);
-        
+    function createCardBackSVG() {
+        // Fixed 100×140 coordinate space, same as createCardSVG
         const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" 
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"
                  width="100%" height="100%">
                 <defs>
-                    <pattern id="backPattern" width="${patternSize}" height="${patternSize}" patternUnits="userSpaceOnUse">
-                        <rect width="${patternSize}" height="${patternSize}" fill="var(--card-back, #2563eb)"/>
-                        <circle cx="${patternSize/2}" cy="${patternSize/2}" r="${patternSize * 0.3}" 
+                    <pattern id="backPattern" width="12" height="12" patternUnits="userSpaceOnUse">
+                        <rect width="12" height="12" fill="var(--card-back, #2563eb)"/>
+                        <circle cx="6" cy="6" r="3.5"
                             fill="var(--card-back-pattern, #3b82f6)" opacity="0.5"/>
                     </pattern>
-                    <filter id="backShadow" x="-10%" y="-10%" width="120%" height="120%">
-                        <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.2"/>
-                    </filter>
                 </defs>
-                
-                <!-- Card background -->
-                <rect x="1" y="1" width="${width-2}" height="${height-2}" 
-                    rx="${radius}" fill="url(#backPattern)" 
-                    stroke="var(--card-back, #2563eb)" stroke-width="2"
-                    filter="url(#backShadow)"/>
-                
-                <!-- Inner border -->
-                <rect x="${width * 0.1}" y="${height * 0.07}" 
-                    width="${width * 0.8}" height="${height * 0.86}" 
-                    rx="${radius * 0.5}" fill="none" 
-                    stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+
+                <!-- Card background with pattern -->
+                <rect x="1" y="1" width="98" height="138"
+                    rx="7" fill="url(#backPattern)"
+                    stroke="var(--card-back, #2563eb)" stroke-width="2"/>
+
+                <!-- Inner decorative border -->
+                <rect x="8" y="8" width="84" height="124"
+                    rx="4" fill="none"
+                    stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
             </svg>
         `;
         

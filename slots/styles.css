@@ -20,6 +20,7 @@ html, body {
 }
 
 .game-area {
+    --symbol-size: clamp(50px, min(18vw, 15vh), 130px);
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -59,8 +60,9 @@ html, body {
 }
 
 .reel {
-    --symbol-size: clamp(65px, min(18vw, 15vh), 130px);
-    --reel-height: calc(var(--symbol-size) * 3 + clamp(4px, 1vmin, 8px) * 2);
+    --reel-gap: clamp(2px, 0.5vmin, 6px);
+    --reel-padding: clamp(4px, 1vmin, 8px);
+    --reel-height: calc(var(--symbol-size) * 3 + var(--reel-gap) * 2 + var(--reel-padding) * 2);
     
     position: relative;
     width: calc(var(--symbol-size) + clamp(8px, 2vmin, 16px));
@@ -75,8 +77,8 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(2px, 0.5vmin, 6px);
-    padding: clamp(4px, 1vmin, 8px);
+    gap: var(--reel-gap);
+    padding: var(--reel-padding);
     transition: transform 0.3s ease;
 }
 
@@ -90,7 +92,12 @@ html, body {
 
 @keyframes reel-spin {
     0% { transform: translateY(0); }
-    100% { transform: translateY(calc(-1 * var(--symbol-size) - var(--space-xs))); }
+    100% { transform: translateY(calc(-1 * (var(--symbol-size) + var(--reel-gap)))); }
+}
+
+@keyframes reel-stop {
+    0% { transform: translateY(calc(-5 * (var(--symbol-size) + var(--reel-gap)))); }
+    100% { transform: translateY(0); }
 }
 
 @keyframes reel-stop {
@@ -498,7 +505,7 @@ html, body {
    RESPONSIVE - Desktop larger scaling
    ============================================================================ */
 @media (min-width: 768px) and (min-height: 600px) {
-    .reel {
+    .game-area {
         --symbol-size: clamp(90px, 15vh, 140px);
     }
     
@@ -508,7 +515,7 @@ html, body {
 }
 
 @media (min-width: 1024px) and (min-height: 700px) {
-    .reel {
+    .game-area {
         --symbol-size: clamp(100px, 16vh, 160px);
     }
     
@@ -531,9 +538,6 @@ html, body {
     .game-area {
         padding: 4px;
         gap: 4px;
-    }
-    
-    .reel {
         --symbol-size: min(14vw, 60px);
     }
     

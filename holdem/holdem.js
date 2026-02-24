@@ -105,6 +105,10 @@ const game = {
   // Round tracking
   lastRaiser: -1,
   actionCount: 0,
+
+  // Betting-round state (persists across re-entrant runBettingRound/playerAction)
+  pendingPhase: null,
+  pendingPlayers: null,
   
   // Settings
   soundEnabled: true,
@@ -371,7 +375,7 @@ function evaluateStartingHand(cards) {
 
 async function executeBotAction(botIndex) {
   const bot = game.players[botIndex];
-  if (bot.folded || bot.chips <= 0) return;
+  if (bot.folded || bot.chips <= 0) return null;
   
   // Show thinking
   UI.showBotThinking(botIndex, true);
@@ -415,6 +419,8 @@ async function executeBotAction(botIndex) {
   }
   
   UI.updateAll();
+
+  return decision.action;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -554,38 +560,44 @@ const UI = {
     };
     
     this.bindEvents();
+    this.updateSoundIcon();
   },
   
   bindEvents() {
+    const bind = (el, eventName, handler) => {
+      if (!el) return;
+      el.addEventListener(eventName, handler);
+    };
+
     // Action buttons
-    this.els.btnDeal.addEventListener('click', () => startHand());
-    this.els.btnFold.addEventListener('click', () => playerAction('fold'));
-    this.els.btnCheckCall.addEventListener('click', () => playerAction('check-call'));
-    this.els.btnRaise.addEventListener('click', () => playerAction('raise'));
+    bind(this.els.btnDeal, 'click', () => startHand());
+    bind(this.els.btnFold, 'click', () => playerAction('fold'));
+    bind(this.els.btnCheckCall, 'click', () => playerAction('check-call'));
+    bind(this.els.btnRaise, 'click', () => playerAction('raise'));
     
     // Sound toggle
-    this.els.btnSound.addEventListener('click', () => {
+    bind(this.els.btnSound, 'click', () => {
       game.soundEnabled = !game.soundEnabled;
       this.updateSoundIcon();
       AudioManager.unlock();
     });
     
     // Modals
-    this.els.btnHelp.addEventListener('click', () => this.showModal('help'));
-    this.els.btnSettings.addEventListener('click', () => this.showModal('settings'));
-    this.els.closeHelp.addEventListener('click', () => this.hideModal('help'));
-    this.els.closeSettings.addEventListener('click', () => this.hideModal('settings'));
+    bind(this.els.btnHelp, 'click', () => this.showModal('help'));
+    bind(this.els.btnSettings, 'click', () => this.showModal('settings'));
+    bind(this.els.closeHelp, 'click', () => this.hideModal('help'));
+    bind(this.els.closeSettings, 'click', () => this.hideModal('settings'));
     
     // Volume
-    this.els.volumeSlider.addEventListener('input', (e) => {
+    bind(this.els.volumeSlider, 'input', (e) => {
       AudioManager.setVolume(e.target.value / 100);
     });
     
     // Modal backdrop click
-    this.els.helpModal.addEventListener('click', (e) => {
+    bind(this.els.helpModal, 'click', (e) => {
       if (e.target === this.els.helpModal) this.hideModal('help');
     });
-    this.els.settingsModal.addEventListener('click', (e) => {
+    bind(this.els.settingsModal, 'click', (e) => {
       if (e.target === this.els.settingsModal) this.hideModal('settings');
     });
   },
@@ -608,6 +620,14 @@ const UI = {
     
     // Update dealer button
     this.els.dealerButtons.forEach((btn, i) => {
+      if (!btn) return;
+
+      // On a fresh game / between hands, don't show a dealer marker.
+      if (game.phase === GamePhase.WAITING) {
+        btn.classList.add('hidden');
+        return;
+      }
+
       const playerIndex = i === 2 ? 0 : i + 1;
       btn.classList.toggle('hidden', game.dealerIndex !== playerIndex);
     });
@@ -665,8 +685,8 @@ const UI = {
   },
   
   updateSoundIcon() {
-    this.els.iconSoundOn.style.display = game.soundEnabled ? 'block' : 'none';
-    this.els.iconSoundOff.style.display = game.soundEnabled ? 'none' : 'block';
+    if (this.els.iconSoundOn) this.els.iconSoundOn.style.display = game.soundEnabled ? 'block' : 'none';
+    if (this.els.iconSoundOff) this.els.iconSoundOff.style.display = game.soundEnabled ? 'none' : 'block';
   },
   
   setStatus(text) {
@@ -922,69 +942,121 @@ async function startHand() {
 }
 
 async function runBettingRound() {
-  game.actionCount = 0;
-  game.lastRaiser = -1;
-  
-  // Count active players
-  const activePlayers = game.players.filter(p => !p.folded && p.chips > 0).length;
-  if (activePlayers <= 1) {
-    await endHand();
-    return;
+  function resetPendingForCurrentPhase() {
+    game.pendingPhase = game.phase;
+    game.pendingPlayers = new Set();
+    for (let i = 0; i < game.players.length; i++) {
+      const p = game.players[i];
+      if (!p.folded && p.chips > 0) {
+        game.pendingPlayers.add(i);
+      }
+    }
+    game.lastRaiser = -1;
   }
-  
-  // Reset action tracking for new round
-  let playersActed = new Set();
-  
-  while (true) {
-    const player = game.players[game.currentPlayerIndex];
-    
-    // Skip folded players or all-in players
-    if (player.folded || player.chips <= 0) {
-      game.currentPlayerIndex = (game.currentPlayerIndex + 1) % 3;
-      continue;
-    }
-    
-    // Check if betting round is complete
-    const allCalledOrFolded = game.players.every(p => 
-      p.folded || p.bet === game.currentBet || p.chips <= 0
-    );
-    const everyoneActed = playersActed.size >= game.players.filter(p => !p.folded && p.chips > 0).length;
-    
-    if (allCalledOrFolded && everyoneActed && game.lastRaiser === -1) {
-      break; // Round complete
-    }
-    if (allCalledOrFolded && game.currentPlayerIndex === game.lastRaiser) {
-      break; // Back to the raiser
-    }
-    
-    UI.updateAll();
-    
-    if (player.isBot) {
-      await executeBotAction(game.currentPlayerIndex);
-      playersActed.add(game.currentPlayerIndex);
-    } else {
-      // Wait for player action
-      UI.setStatus('Your turn');
-      return; // Player will call playerAction()
-    }
-    
-    // Check if only one player left
-    const remainingPlayers = game.players.filter(p => !p.folded);
-    if (remainingPlayers.length === 1) {
+
+  if (game.pendingPhase !== game.phase || !game.pendingPlayers) {
+    resetPendingForCurrentPhase();
+  }
+
+  // Step the round forward until it's the human's turn, the round ends, or we hit a safety limit.
+  for (let safety = 0; safety < 60; safety++) {
+    const remainingPlayers = game.players.filter(p => !p.folded).length;
+    if (remainingPlayers <= 1) {
       await endHand();
       return;
     }
-    
-    game.currentPlayerIndex = (game.currentPlayerIndex + 1) % 3;
+
+    const allCalledOrAllInOrFolded = game.players.every(p =>
+      p.folded || p.chips <= 0 || p.bet === game.currentBet
+    );
+
+    if (allCalledOrAllInOrFolded && game.pendingPlayers.size === 0) {
+      game.pendingPlayers = null;
+      await nextPhase();
+      return;
+    }
+
+    // Find next player who both can act and still owes an action in this street.
+    let attempts = 0;
+    while (
+      attempts < 3 &&
+      (
+        game.players[game.currentPlayerIndex].folded ||
+        game.players[game.currentPlayerIndex].chips <= 0 ||
+        !game.pendingPlayers.has(game.currentPlayerIndex)
+      )
+    ) {
+      game.currentPlayerIndex = (game.currentPlayerIndex + 1) % 3;
+      attempts++;
+    }
+
+    // If nobody can act, but bets are aligned, move on.
+    if (
+      game.players[game.currentPlayerIndex].folded ||
+      game.players[game.currentPlayerIndex].chips <= 0 ||
+      !game.pendingPlayers.has(game.currentPlayerIndex)
+    ) {
+      if (allCalledOrAllInOrFolded) {
+        game.pendingPlayers = null;
+        await nextPhase();
+      }
+      return;
+    }
+
+    const playerIndex = game.currentPlayerIndex;
+    const player = game.players[playerIndex];
+
+    UI.updateAll();
+
+    if (!player.isBot) {
+      UI.setStatus('Your turn');
+      return;
+    }
+
+    const prevBet = game.currentBet;
+    const botAction = await executeBotAction(playerIndex);
+
+    // Bot may have been unable to act (e.g. just went all-in earlier).
+    if (botAction) {
+      game.pendingPlayers.delete(playerIndex);
+
+      // If bot raised, everyone else with chips must respond.
+      if (botAction === 'raise' && game.currentBet > prevBet) {
+        const newPending = new Set();
+        for (let i = 0; i < game.players.length; i++) {
+          if (i === playerIndex) continue;
+          const p = game.players[i];
+          if (!p.folded && p.chips > 0) newPending.add(i);
+        }
+        game.pendingPlayers = newPending;
+      }
+    }
+
+    game.currentPlayerIndex = (playerIndex + 1) % 3;
   }
-  
-  // Move to next phase
+
+  // Safety fallback: avoid soft-locking the UI.
+  game.pendingPlayers = null;
   await nextPhase();
 }
 
 async function playerAction(action) {
   const player = game.players[0];
   const toCall = game.currentBet - player.bet;
+
+  function ensurePendingReady() {
+    if (game.pendingPhase === game.phase && game.pendingPlayers) return;
+    game.pendingPhase = game.phase;
+    game.pendingPlayers = new Set();
+    for (let i = 0; i < game.players.length; i++) {
+      const p = game.players[i];
+      if (!p.folded && p.chips > 0) game.pendingPlayers.add(i);
+    }
+    game.lastRaiser = -1;
+  }
+
+  ensurePendingReady();
+  const prevBet = game.currentBet;
   
   switch (action) {
     case 'fold':
@@ -1006,15 +1078,48 @@ async function playerAction(action) {
       
     case 'raise':
       // Simple raise: double the current bet
-      const raiseAmount = Math.min(game.currentBet + CONFIG.BIG_BLIND * 2, player.chips);
-      const actualRaise = raiseAmount - player.bet;
-      player.chips -= actualRaise;
-      player.bet = raiseAmount;
-      game.pot += actualRaise;
-      game.currentBet = raiseAmount;
-      game.lastRaiser = 0;
-      AudioManager.playBet();
+      const targetBet = Math.min(
+        game.currentBet + CONFIG.BIG_BLIND * 2,
+        player.bet + player.chips
+      );
+      const actualRaise = targetBet - player.bet;
+
+      if (actualRaise > 0) {
+        player.chips -= actualRaise;
+        player.bet = targetBet;
+        game.pot += actualRaise;
+        game.currentBet = targetBet;
+        game.lastRaiser = 0;
+        AudioManager.playBet();
+      } else {
+        // Can't raise (not enough chips); treat as check/call.
+        if (toCall > 0) {
+          const callAmount = Math.min(toCall, player.chips);
+          player.chips -= callAmount;
+          player.bet += callAmount;
+          game.pot += callAmount;
+          AudioManager.playBet();
+        } else {
+          AudioManager.playCheck();
+        }
+      }
       break;
+  }
+
+  // Mark player as having acted this street
+  if (game.pendingPlayers) {
+    game.pendingPlayers.delete(0);
+  }
+
+  // If player raised, everyone else with chips must respond.
+  if (action === 'raise' && game.pendingPlayers && game.currentBet > prevBet) {
+    const newPending = new Set();
+    for (let i = 0; i < game.players.length; i++) {
+      if (i === 0) continue;
+      const p = game.players[i];
+      if (!p.folded && p.chips > 0) newPending.add(i);
+    }
+    game.pendingPlayers = newPending;
   }
   
   UI.updateAll();
@@ -1038,6 +1143,34 @@ async function nextPhase() {
   }
   game.currentBet = 0;
   game.lastRaiser = -1;
+
+  // Reset betting-round pending state for the new street
+  game.pendingPhase = null;
+  game.pendingPlayers = null;
+  
+  // Check if we should skip straight to showdown (all but one player is all-in)
+  const activePlayers = game.players.filter(p => !p.folded && p.chips > 0);
+  const allInPlayers = game.players.filter(p => !p.folded && p.chips === 0);
+  
+  if (activePlayers.length <= 1 && allInPlayers.length > 0) {
+    // Fast forward to showdown
+    while (game.phase !== GamePhase.RIVER) {
+      if (game.phase === GamePhase.PREFLOP) {
+        game.phase = GamePhase.FLOP;
+        for (let i = 0; i < 3; i++) game.community.push(dealCard());
+      } else if (game.phase === GamePhase.FLOP) {
+        game.phase = GamePhase.TURN;
+        game.community.push(dealCard());
+      } else if (game.phase === GamePhase.TURN) {
+        game.phase = GamePhase.RIVER;
+        game.community.push(dealCard());
+      }
+    }
+    UI.renderCommunityCards();
+    await sleep(1000);
+    await showdown();
+    return;
+  }
   
   switch (game.phase) {
     case GamePhase.PREFLOP:
@@ -1153,7 +1286,7 @@ async function showdown() {
 
 async function endHand() {
   // Someone won without showdown
-  const winner = game.players.find(p => !p.folded);
+  const winner = game.players.find(p => !p.folded && p.chips > 0) || game.players.find(p => !p.folded);
   winner.chips += game.pot;
   
   const playerWon = winner === game.players[0];

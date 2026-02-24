@@ -60,10 +60,6 @@ const game = {
   // Roll history
   history: [],
   
-  // Auto roll
-  autoRollEnabled: false,
-  autoRollTimer: null,
-  
   // Settings
   soundEnabled: true,
   audioUnlocked: false,
@@ -284,28 +280,29 @@ const AudioManager = {
     osc.stop(this.ctx.currentTime + 0.2);
   },
 };
-    if (!game.soundEnabled || !this.ctx) return;
-    
-    const notes = [880, 1174.66, 1396.91]; // A5, D6, F6
-    
-    notes.forEach((freq, i) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      
-      const startTime = this.ctx.currentTime + i * 0.1;
-      gain.gain.setValueAtTime(0.12 * this.masterVolume, startTime);
-      gain.gain.linearRampToValueAtTime(0.001, startTime + 0.5);
-      
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + 0.5);
-    });
-  },
-};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAYOUT FIT (NO SCROLL)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function fitAppToViewport() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  // Reset to measure unscaled layout
+  document.documentElement.style.setProperty('--app-scale', '1');
+
+  // Next frame: measure and scale down only if needed
+  requestAnimationFrame(() => {
+    const available = window.innerHeight;
+    const contentHeight = app.scrollHeight;
+
+    // Leave a tiny buffer to avoid subpixel scrollbars
+    const targetScale = Math.min(1, (available - 2) / Math.max(1, contentHeight));
+    const clamped = Math.max(0.85, targetScale);
+    document.documentElement.style.setProperty('--app-scale', clamped.toFixed(3));
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UI MANAGER
@@ -342,11 +339,11 @@ const UI = {
       // Buttons
       btnRoll: document.getElementById('btn-roll'),
       btnClear: document.getElementById('btn-clear'),
-      autoRoll: document.getElementById('auto-roll'),
+      btnMoreBets: document.getElementById('btn-more-bets'),
       
       // More bets
-      moreBetsToggle: document.getElementById('more-bets-toggle'),
       moreBets: document.getElementById('more-bets'),
+      moreBetsBackdrop: document.getElementById('more-bets-backdrop'),
       
       // Overlays
       resultOverlay: document.getElementById('result-overlay'),
@@ -472,7 +469,27 @@ const UI = {
   animateDiceRoll(callback) {
     const die1 = this.els.die1;
     const die2 = this.els.die2;
-    
+
+    const duration = game.reducedMotion ? 160 : Math.max(CONFIG.DICE_ANIMATION_MS, 560);
+
+    // Per-roll randomness for a less repetitive animation
+    const spin1 = Math.random() > 0.5 ? 1 : -1;
+    const spin2 = Math.random() > 0.5 ? 1 : -1;
+    const tiltX1 = (Math.random() > 0.5 ? 1 : -1) * (18 + Math.floor(Math.random() * 10));
+    const tiltY1 = (Math.random() > 0.5 ? 1 : -1) * (14 + Math.floor(Math.random() * 10));
+    const tiltX2 = (Math.random() > 0.5 ? 1 : -1) * (18 + Math.floor(Math.random() * 10));
+    const tiltY2 = (Math.random() > 0.5 ? 1 : -1) * (14 + Math.floor(Math.random() * 10));
+
+    die1.style.setProperty('--spin', String(spin1));
+    die1.style.setProperty('--tilt-x', String(tiltX1));
+    die1.style.setProperty('--tilt-y', String(tiltY1));
+    die1.style.setProperty('--dice-roll-duration', `${duration}ms`);
+
+    die2.style.setProperty('--spin', String(spin2));
+    die2.style.setProperty('--tilt-x', String(tiltX2));
+    die2.style.setProperty('--tilt-y', String(tiltY2));
+    die2.style.setProperty('--dice-roll-duration', `${duration}ms`);
+
     die1.classList.add('rolling');
     die2.classList.add('rolling');
     
@@ -480,32 +497,35 @@ const UI = {
     
     // Hide the roll total during animation
     this.els.rollTotal.textContent = '';
-    
-    // Animate random faces during roll
-    let animFrames = 0;
-    const maxFrames = game.reducedMotion ? 2 : 8;
-    const interval = setInterval(() => {
-      this.renderDie(die1, rollDie());
-      this.renderDie(die2, rollDie());
-      animFrames++;
-      if (animFrames >= maxFrames) {
-        clearInterval(interval);
+
+    // Smooth random faces while rolling
+    const start = performance.now();
+    let lastSwap = start;
+    const swapEvery = game.reducedMotion ? 90 : 38;
+
+    const tick = (t) => {
+      if (t - lastSwap >= swapEvery) {
+        this.renderDie(die1, rollDie());
+        this.renderDie(die2, rollDie());
+        lastSwap = t;
       }
-    }, 50);
-    
-    const animDuration = game.reducedMotion ? 150 : CONFIG.DICE_ANIMATION_MS;
-    
-    setTimeout(() => {
-      clearInterval(interval);
+
+      if (t - start < duration) {
+        requestAnimationFrame(tick);
+        return;
+      }
+
       die1.classList.remove('rolling');
       die2.classList.remove('rolling');
-      
+
       // Show final dice values
       this.renderDice();
       AudioManager.playDiceLand();
       
       if (callback) callback();
-    }, animDuration);
+    };
+
+    requestAnimationFrame(tick);
   },
   
   updateHistory() {
@@ -574,11 +594,11 @@ const UI = {
   },
   
   showSoundPrompt() {
-    this.els.soundPrompt.classList.remove('hidden');
+    if (this.els.soundPrompt) this.els.soundPrompt.classList.remove('hidden');
   },
   
   hideSoundPrompt() {
-    this.els.soundPrompt.classList.add('hidden');
+    if (this.els.soundPrompt) this.els.soundPrompt.classList.add('hidden');
   },
   
   updateSoundIcon() {
@@ -592,11 +612,43 @@ const UI = {
   },
   
   toggleMoreBets() {
-    const toggle = this.els.moreBetsToggle;
     const container = this.els.moreBets;
+    const btn = this.els.btnMoreBets;
+    if (!container || !btn) return;
     
-    toggle.classList.toggle('expanded');
     container.classList.toggle('collapsed');
+
+    const isOpen = !container.classList.contains('collapsed');
+    document.body.classList.toggle('more-bets-open', isOpen);
+    if (this.els.moreBetsBackdrop) {
+      this.els.moreBetsBackdrop.classList.toggle('hidden', !isOpen);
+    }
+
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+    // Re-fit to viewport in case the overlay changes layout needs
+    if (typeof fitAppToViewport === 'function') {
+      fitAppToViewport();
+    }
+  },
+
+  closeMoreBets() {
+    const container = this.els.moreBets;
+    if (!container || container.classList.contains('collapsed')) return;
+    this.toggleMoreBets();
+  },
+
+  updateActionButtons() {
+    const canOpenMore = game.state !== GameState.ROLLING && game.state !== GameState.ROUND_END;
+    const hasAnyBet = (game.bets.pass + game.bets.dontPass + game.bets.field) > 0;
+
+    if (this.els.btnClear) {
+      this.els.btnClear.disabled = !(game.state === GameState.IDLE_BETTING && hasAnyBet);
+    }
+
+    if (this.els.btnMoreBets) {
+      this.els.btnMoreBets.disabled = !canOpenMore;
+    }
   },
   
   setRollButtonEnabled(enabled) {
@@ -625,8 +677,6 @@ const UI = {
     setTimeout(() => container.remove(), 4000);
   },
   
-  applySettings() {
-    // High contrast
   applySettings() {
     // Reduced motion
     document.body.classList.toggle('reduce-motion', game.reducedMotion);
@@ -718,6 +768,9 @@ function updateInstruction() {
   } else if (game.state === GameState.POINT_PHASE) {
     UI.updateInstruction(`Point is ${game.point}. Roll ${game.point} to win, 7 to lose.`);
   }
+
+  UI.setRollButtonEnabled(canRoll());
+  UI.updateActionButtons();
 }
 
 function canRoll() {
@@ -868,8 +921,6 @@ function resolveRoll(total) {
       UI.updateCredits();
       UI.lockBets(true, false); // Lock Pass/Don't but allow Field
       UI.setRollButtonEnabled(true);
-      
-      scheduleAutoRoll();
       return;
     }
   }
@@ -952,8 +1003,6 @@ function resolveRoll(total) {
       UI.updateCredits();
       UI.lockBets(true, false);
       UI.setRollButtonEnabled(true);
-      
-      scheduleAutoRoll();
       return;
     }
   }
@@ -1004,10 +1053,8 @@ function endRound() {
   UI.updatePhase();
   UI.updateBetDisplays();
   UI.lockBets(false, false);
-  UI.setRollButtonEnabled(true);
+  UI.setRollButtonEnabled(canRoll());
   updateInstruction();
-  
-  scheduleAutoRoll();
 }
 
 function continueGame() {
@@ -1030,48 +1077,8 @@ function resetCredits() {
   UI.updatePhase();
   UI.updateHistory();
   UI.lockBets(false, false);
-  UI.setRollButtonEnabled(true);
+  UI.setRollButtonEnabled(canRoll());
   updateInstruction();
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// AUTO ROLL
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function scheduleAutoRoll() {
-  if (!game.autoRollEnabled) return;
-  if (!game.audioUnlocked) return; // Don't auto roll until user has interacted
-  if (game.credits <= 0) return;
-  if (game.state === GameState.ROLLING || game.state === GameState.ROUND_END) return;
-  
-  clearTimeout(game.autoRollTimer);
-  
-  game.autoRollTimer = setTimeout(() => {
-    if (!game.autoRollEnabled) return;
-    
-    // If no bet placed during come-out, place minimum pass bet
-    if (game.isComeOut && game.bets.pass === 0 && game.bets.dontPass === 0) {
-      if (canPlaceBet(CONFIG.MIN_BET)) {
-        placeBet('pass', CONFIG.MIN_BET);
-      }
-    }
-    
-    if (canRoll()) {
-      performRoll();
-    }
-  }, CONFIG.AUTO_ROLL_DELAY);
-}
-
-function toggleAutoRoll() {
-  game.autoRollEnabled = UI.els.autoRoll.checked;
-  
-  if (game.autoRollEnabled) {
-    scheduleAutoRoll();
-  } else {
-    clearTimeout(game.autoRollTimer);
-  }
-  
-  saveSettings();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1083,7 +1090,6 @@ function saveSettings() {
     soundEnabled: game.soundEnabled,
     volume: game.volume,
     reducedMotion: game.reducedMotion,
-    lastBet: game.bets.pass || game.bets.dontPass || CONFIG.MIN_BET,
   };
   
   try {
@@ -1153,15 +1159,20 @@ function setupEventListeners() {
   
   // Clear bets
   UI.els.btnClear.addEventListener('click', clearAllBets);
-  
-  // Auto roll toggle
-  UI.els.autoRoll.addEventListener('change', toggleAutoRoll);
-  
-  // More bets toggle
-  UI.els.moreBetsToggle.addEventListener('click', () => {
+
+  // More bets toggle (bottom action bar)
+  UI.els.btnMoreBets.addEventListener('click', () => {
     AudioManager.playClick();
     UI.toggleMoreBets();
   });
+
+  // Backdrop closes More Bets overlay
+  if (UI.els.moreBetsBackdrop) {
+    UI.els.moreBetsBackdrop.addEventListener('click', () => {
+      AudioManager.playClick();
+      UI.closeMoreBets();
+    });
+  }
   
   // Continue button
   UI.els.btnContinue.addEventListener('click', continueGame);
@@ -1183,14 +1194,21 @@ function setupEventListeners() {
   });
   
   // Settings modal
-  document.getElementById('btn-settings').addEventListener('click', () => {
-    AudioManager.playClick();
-    UI.showModal(UI.els.settingsModal);
-  });
-  document.getElementById('close-settings').addEventListener('click', () => {
-    AudioManager.playClick();
-    UI.hideModal(UI.els.settingsModal);
-  });
+  const btnSettings = document.getElementById('btn-settings');
+  if (btnSettings) {
+    btnSettings.addEventListener('click', () => {
+      AudioManager.playClick();
+      UI.showModal(UI.els.settingsModal);
+    });
+  }
+
+  const closeSettings = document.getElementById('close-settings');
+  if (closeSettings) {
+    closeSettings.addEventListener('click', () => {
+      AudioManager.playClick();
+      UI.hideModal(UI.els.settingsModal);
+    });
+  }
   
   // Volume slider
   UI.els.volumeSlider.addEventListener('input', (e) => {
@@ -1208,9 +1226,11 @@ function setupEventListeners() {
   UI.els.helpModal.addEventListener('click', (e) => {
     if (e.target === UI.els.helpModal) UI.hideModal(UI.els.helpModal);
   });
-  UI.els.settingsModal.addEventListener('click', (e) => {
-    if (e.target === UI.els.settingsModal) UI.hideModal(UI.els.settingsModal);
-  });
+  if (UI.els.settingsModal) {
+    UI.els.settingsModal.addEventListener('click', (e) => {
+      if (e.target === UI.els.settingsModal) UI.hideModal(UI.els.settingsModal);
+    });
+  }
   
   // Keyboard support
   document.addEventListener('keydown', (e) => {
@@ -1224,6 +1244,7 @@ function setupEventListeners() {
     if (e.code === 'Escape') {
       UI.hideModal(UI.els.helpModal);
       UI.hideModal(UI.els.settingsModal);
+      UI.closeMoreBets();
     }
   });
 }
@@ -1249,12 +1270,20 @@ function init() {
   UI.renderDie(UI.els.die2, 1);
   UI.els.rollTotal.textContent = '';
   updateInstruction();
+
+  // Ensure roll starts disabled until a valid bet exists
+  UI.setRollButtonEnabled(canRoll());
+  UI.updateActionButtons();
   
   // Hide sound prompt (sound enabled by default)
   UI.hideSoundPrompt();
   
   // Setup events
   setupEventListeners();
+
+  // Fit layout to viewport (no scrolling)
+  fitAppToViewport();
+  window.addEventListener('resize', () => fitAppToViewport());
   
   console.log('Craps initialized');
 }

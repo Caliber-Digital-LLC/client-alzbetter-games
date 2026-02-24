@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///Users/garysmacair/Downloads/AlzBetter%20Slot%20Machine.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlzBetter Slot Machine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #1a0a2e;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(97, 38, 146, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, rgba(97, 38, 146, 0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(97, 38, 146, 0.15) 0%, transparent 40%);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+    padding: 12px;
+  }
+
+  .logo-container {
+    margin-bottom: 12px;
+    animation: logoFloat 3s ease-in-out infinite;
+  }
+  .logo-container svg {
+    width: min(340px, 70vw);
+    height: auto;
+    filter: drop-shadow(0 0 20px rgba(97, 38, 146, 0.6));
+  }
+
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .machine {
+    background: linear-gradient(145deg, #2a1548, #1e0e35);
+    border: 3px solid #612692;
+    border-radius: 28px;
+    padding: 28px 32px 24px;
+    box-shadow:
+      0 0 40px rgba(97, 38, 146, 0.4),
+      inset 0 2px 0 rgba(255,255,255,0.05),
+      0 20px 60px rgba(0,0,0,0.5);
+    position: relative;
+    width: min(680px, 96vw);
+  }
+
+  .machine::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(97,38,146,0.6), transparent 40%, transparent 60%, rgba(97,38,146,0.3));
+    z-index: -1;
+  }
+
+  .credits-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 0 6px;
+  }
+  .credits-bar span {
+    font-family: 'Bangers', cursive;
+    color: #f0c040;
+    font-size: 1.6rem;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px rgba(240, 192, 64, 0.4);
+  }
+  #credits, #winAmount {
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+  }
+
+  .reels-window {
+    background: #0d0618;
+    border-radius: 20px;
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    border: 2px solid rgba(97, 38, 146, 0.5);
+    box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reel {
+    flex: 1;
+    height: 200px;
+    background: linear-gradient(180deg, #0a0412 0%, #140926 50%, #0a0412 100%);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(97,38,146,0.3);
+  }
+
+  .reel-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transition: top 0s linear;
+  }
+
+  .reel-item {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5.5rem;
+    user-select: none;
+    line-height: 1;
+  }
+
+  /* Highlight line */
+  .reels-window::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #f0c040, transparent);
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.5;
+  }
+
+  .controls {
+    display: flex;
+    gap: 14px;
+    margin-top: 20px;
+    justify-content: center;
+  }
+
+  .spin-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    padding: 18px 64px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f0c040, #e6a020);
+    color: #1a0a2e;
+    box-shadow:
+      0 4px 20px rgba(240, 192, 64, 0.4),
+      inset 0 2px 0 rgba(255,255,255,0.3);
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .spin-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(240, 192, 64, 0.6), inset 0 2px 0 rgba(255,255,255,0.3);
+  }
+  .spin-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .spin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .bet-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 1.5px;
+    padding: 18px 30px;
+    border: 2px solid #612692;
+    border-radius: 50px;
+    cursor: pointer;
+    background: transparent;
+    color: #c9a0e8;
+    transition: all 0.15s;
+  }
+  .bet-btn:hover {
+    background: rgba(97, 38, 146, 0.3);
+    border-color: #8a3cc7;
+  }
+
+  .win-display {
+    text-align: center;
+    margin-top: 16px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .win-text {
+    font-family: 'Bangers', cursive;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, #f0c040, #ff6b6b, #f0c040);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 1.5s infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .win-text.show { opacity: 1; }
+
+  @keyframes shimmer {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+
+  @keyframes celebrate {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  .machine.winning {
+    animation: celebrate 0.4s ease 3;
+    border-color: #f0c040;
+    box-shadow: 0 0 60px rgba(240, 192, 64, 0.5), 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: fall 1.5s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes fall {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(200px) scale(0); }
+  }
+
+  /* Mobile - still large but fits screen */
+  @media (max-width: 500px) {
+    .reel { height: 160px; }
+    .reel-item { height: 160px; font-size: 4.2rem; }
+    .spin-btn { font-size: 1.7rem; padding: 16px 48px; }
+    .bet-btn { font-size: 1.2rem; padding: 16px 24px; }
+    .credits-bar span { font-size: 1.4rem; }
+    .win-text { font-size: 1.8rem; }
+    .machine { padding: 20px 14px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="logo-container">
+  <svg version="1.1" viewBox="0 0 966.03479 206.50681" xmlns="http://www.w3.org/2000/svg">
+    <g transform="matrix(1.3333333,0,0,-1.3333333,1.2725516e-4,206.5068)">
+      <g transform="scale(0.1)">
+        <path d="M 138.41,25.1914 C 246.578,139.289 366.266,240.648 494.145,326.422 c 168.429,112.976 462.8,343.332 541.885,616.801 l 0.32,0.968 c 23.13,70.739 17.4,148.869 14.96,172.189 l -0.2,0.13 -0.8,7.44 c -8.92,83.36 -39.99,163.18 -89.865,230.81 C 869.813,1477.67 724.684,1550.22 572.84,1548.78 317.492,1546.38 106.16,1336.8 101.746,1081.61 99.4609,949.621 150.004,826.055 244.051,733.676 l 86.824,-86.817 c 27.559,-27.558 71.777,-30.761 102.871,-7.476 l 1.16,0.867 c 18.813,14.133 30.297,35.195 31.914,58.094 1.606,22.754 -6.726,45.058 -22.859,61.191 l -87.879,87.867 c -60.504,59.321 -94.176,138.692 -94.766,223.428 -0.558,81.04 30.016,158.56 86.09,218.31 56.114,59.79 131.551,95.14 212.426,99.54 156.484,8.59 293.836,-96.34 326.602,-249.35 4.164,-21.37 15.394,-96.27 -12.325,-175.248 -3.136,-8.523 -6.332,-16.559 -9.867,-24.769 l -0.207,-0.465 C 816.285,828.227 697.918,655.309 405.223,459 267.137,366.379 138.258,257.41 22.1758,135.09 -0.21875,111.5 -6.16016,78.2891 6.67578,48.4102 19.5039,18.5508 47.668,0 80.1719,0 102.016,0 123.238,9.17969 138.41,25.1914" style="fill:#612692"></path>
+        <path d="m 1702.43,733.578 c 94.21,92.535 144.75,216.18 142.41,348.252 -4.37,246.18 -200.13,450.9 -445.68,466.05 -90.04,5.56 -179.11,-14.26 -257.64,-57.3 l -1.67,-0.8 c -7.07,-2.86 -13.72,-6.75 -19.77,-11.55 -21.52,-17.09 -32.78,-43.68 -30.09,-71.09 3.6,-36.95 33.05,-67.09 70.01,-71.69 15.42,-1.9 31.01,0.69 45.07,7.51 3.93,1.92 7.51,3.99 10.66,6.16 l 1.36,0.84 c 51.56,28.47 110.04,41.89 169.07,38.75 166.32,-8.75 300.5,-151.56 299.11,-318.33 -0.71,-84.575 -34.38,-163.782 -94.82,-223.036 l -562.2,-562.196 c -30.297,-30.296 -79.605,-30.296 -109.906,0 l -66.227,66.231 c -15.371,15.371 -35.558,23.191 -55.812,23.191 -17.371,0 -34.793,-5.769 -49.27,-17.429 l -1.543,-1.25 c -17.453,-14.032 -28.164,-34.911 -29.371,-57.27 -1.207,-22.312 7.164,-44.16 22.965,-59.973 L 849.129,128.609 c 33.164,-33.1676 77.262,-51.4371 124.164,-51.4371 46.907,0 90.997,18.2695 124.167,51.4371 l 604.97,604.969" style="fill:#612692"></path>
+        <path d="m 2555.69,680.211 h -280.72 l 140.83,321.099 z m -96.14,459.109 c -7.18,17.2 -24.74,28.75 -43.71,28.75 -19.06,0 -35.65,-10.43 -44.68,-28.54 L 2068.53,448.121 c -5.11,-11.68 -5.2,-24.75 -0.26,-36.789 4.86,-11.852 13.92,-21.16 25.52,-26.242 11.62,-5.059 24.57,-5.418 36.44,-0.93 12.04,4.539 21.49,13.449 26.6,25.129 L 2233,584.273 h 364.66 l 77.11,-174.793 c 7.41,-17.73 24.15,-28.75 43.7,-28.75 5.92,0 11.8,1.301 19.04,4.2 l 0.37,0.16 c 11.67,5.101 20.59,14.539 25.14,26.601 4.48,11.86 4.15,24.809 -0.94,36.43 l -302.53,691.199" style="fill:#5d606a"></path>
+        <path d="m 2958.91,1168.07 c -26.9,0 -47.97,-21.07 -47.97,-47.96 V 428.711 c 0,-26.922 21.07,-47.981 47.97,-47.981 26.9,0 47.97,21.059 47.97,47.981 v 691.399 c 0,26.89 -21.07,47.96 -47.97,47.96" style="fill:#5d606a"></path>
+        <path d="m 3658.92,476.672 h -339.35 l 364.98,434.676 c 11.86,14.843 14.58,34.246 7.13,50.636 -7.42,16.352 -24.91,27.329 -43.52,27.329 h -406.02 c -26.46,0 -47.98,-21.036 -47.98,-46.907 0,-26.894 21.08,-47.961 47.98,-47.961 H 3544.9 L 3180.34,459.199 c -11.69,-13.148 -14.24,-32.597 -6.5,-51.179 7.66,-16.829 24.34,-27.29 43.52,-27.29 h 441.56 c 26.45,0 47.97,21.52 47.97,47.981 0,25.551 -22.41,47.961 -47.97,47.961" style="fill:#5d606a"></path>
+        <path d="M 4252,476.672 H 3977.97 V 743.668 H 4252 c 73.32,0 132.97,-60.137 132.97,-134.031 0,-73.336 -59.65,-132.965 -132.97,-132.965 z m -274.03,361.863 v 234.685 h 240.66 c 64.4,0 116.79,-52.41 116.79,-116.814 0,-64.984 -52.39,-117.871 -116.79,-117.871 z m 391.66,-32.238 c 39.44,40.027 61.74,93.758 61.74,150.109 0,116.714 -95.43,211.664 -212.74,211.664 h -288.64 c -26.89,0 -47.97,-21.07 -47.97,-47.96 V 428.711 c 0,-26.922 21.08,-47.981 47.97,-47.981 H 4252 c 126.23,0 228.91,102.692 228.91,228.907 0,81.121 -42.19,154.851 -111.28,196.66" style="fill:#5d606a"></path>
+        <path d="m 4908.16,894.445 c 92.6,0 161.26,-62.843 178.27,-161.453 H 4724.7 c 18.29,97.203 90.41,161.453 183.46,161.453 z m 0,94.868 c -81.17,0 -154.38,-32.223 -206.16,-90.754 -49.39,-56.137 -76.6,-131.977 -76.6,-213.543 0,-173.465 123.87,-304.286 288.14,-304.286 101.15,0 189.72,49.43 243.12,135.79 13.63,22.718 6.24,52.293 -16.46,65.898 -22.71,13.672 -50.87,7.246 -66.01,-15.508 -33.61,-57.351 -92.17,-90.238 -160.65,-90.238 -93.32,0 -168.95,65.187 -188.6,160.375 h 413.69 c 26.44,0 47.96,21.512 47.96,47.969 0,176.312 -117.1,304.297 -278.43,304.297" style="fill:#5d606a"></path>
+        <path d="m 5638.12,501.082 c -18.99,17.566 -49.31,15.77 -68.19,-4.723 -10.02,-12.519 -25.41,-19.687 -42.21,-19.687 -31.75,0 -57.58,25.34 -57.58,56.488 v 361.285 h 108.19 c 26.9,0 47.97,21.067 47.97,47.961 0,25.871 -21.52,46.907 -47.97,46.907 h -108.19 v 96.327 c 0,26.91 -21.08,47.98 -47.96,47.98 -26.45,0 -47.98,-21.53 -47.98,-47.98 v -96.327 h -17.73 c -25.85,0 -46.89,-21.036 -46.89,-46.907 0,-26.453 21.04,-47.961 46.89,-47.961 h 17.73 V 533.16 c 0,-84.051 68.87,-152.43 153.52,-152.43 44.45,0 86.66,19.379 115.77,53.161 l 0.4,0.48 c 16.95,21.578 14.06,51.188 -5.77,66.711" style="fill:#5d606a"></path>
+        <path d="m 6100.42,501.082 c -19,17.59 -49.29,15.758 -68.18,-4.723 -10.01,-12.519 -25.4,-19.687 -42.21,-19.687 -31.75,0 -57.59,25.34 -57.59,56.488 v 361.285 h 108.21 c 26.89,0 47.96,21.067 47.96,47.961 0,25.871 -21.51,46.907 -47.96,46.907 h -108.21 v 96.327 c 0,26.91 -21.06,47.98 -47.96,47.98 -26.45,0 -47.97,-21.53 -47.97,-47.98 v -96.327 h -17.73 c -25.86,0 -46.89,-21.036 -46.89,-46.907 0,-26.453 21.03,-47.961 46.89,-47.961 h 17.73 V 533.16 c 0,-84.051 68.87,-152.43 153.52,-152.43 44.46,0 86.65,19.379 115.77,53.161 l 0.39,0.48 c 7.9,10.059 11.73,22.418 10.79,34.809 -1.01,13.011 -7.18,24.601 -16.56,31.902" style="fill:#5d606a"></path>
+        <path d="m 6508.04,894.445 c 92.6,0 161.26,-62.843 178.26,-161.453 h -361.74 c 18.29,97.203 90.42,161.453 183.48,161.453 z m 0,94.868 c -81.17,0 -154.37,-32.223 -206.16,-90.754 -49.39,-56.137 -76.59,-131.977 -76.59,-213.543 0,-173.465 123.86,-304.286 288.13,-304.286 101.14,0 189.72,49.43 243.14,135.79 13.61,22.718 6.22,52.293 -16.49,65.898 -22.67,13.672 -50.85,7.246 -66.01,-15.508 -33.61,-57.351 -92.15,-90.238 -160.64,-90.238 -93.3,0 -168.94,65.187 -188.61,160.375 h 413.7 c 26.44,0 47.96,21.512 47.96,47.969 0,176.312 -117.1,304.297 -278.43,304.297" style="fill:#5d606a"></path>
+        <path d="m 7197.28,989.313 c -57.14,0 -110.58,-18.325 -153.42,-52.129 v 5.222 c 0,25.871 -21.52,46.907 -47.98,46.907 -25.85,0 -46.88,-21.036 -46.88,-46.907 V 428.711 c 0,-26.461 21.03,-47.981 46.88,-47.981 26.92,0 47.98,21.059 47.98,47.981 v 299.391 c 0,94.832 65.96,166.343 153.42,166.343 26.91,0 47.98,21.067 47.98,47.961 0,25.871 -21.53,46.907 -47.98,46.907" style="fill:#5d606a"></path>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<div class="machine" id="machine">
+  <div class="credits-bar">
+    <span>CREDITS: <span id="credits">100</span></span>
+    <span>BET: <span id="betDisplay">10</span></span>
+  </div>
+
+  <div class="reels-window">
+    <div class="reel" id="reel0"><div class="reel-strip" style="top: 0px; transition: top 1.2s cubic-bezier(0.15, 0.85, 0.35, 1);"><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div></div></div>
+    <div class="reel" id="reel1"><div class="reel-strip" style="top: 0px; transition: top 1.7s cubic-bezier(0.15, 0.85, 0.35, 1);"><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div></div></div>
+    <div class="reel" id="reel2"><div class="reel-strip" style="top: 0px; transition: top 2.2s cubic-bezier(0.15, 0.85, 0.35, 1);"><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div><div class="reel-item" style="height: 200px;">7️⃣</div><div class="reel-item" style="height: 200px;">🍀</div><div class="reel-item" style="height: 200px;">⭐</div><div class="reel-item" style="height: 200px;">🧠</div><div class="reel-item" style="height: 200px;">🍒</div><div class="reel-item" style="height: 200px;">🍋</div><div class="reel-item" style="height: 200px;">🔔</div><div class="reel-item" style="height: 200px;">💎</div></div></div>
+  </div>
+
+  <div class="win-display">
+    <div class="win-text" id="winText">NICE! +50</div>
+  </div>
+
+  <div class="controls">
+    <button class="bet-btn" id="betBtn">BET</button>
+    <button class="spin-btn" id="spinBtn">SPIN</button>
+  </div>
+</div>
+
+<div class="particles" id="particles"></div>
+
+<script>
+  // ---- Audio Engine (Web Audio API) ----
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx;
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playTick() {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.05);
+  }
+
+  function playReelStop() {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(300, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.15);
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.15);
+  }
+
+  function playWin() {
+    ensureAudio();
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      const t = audioCtx.currentTime + i * 0.12;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.15, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.3);
+    });
+  }
+
+  function playJackpot() {
+    ensureAudio();
+    const notes = [523, 659, 784, 1047, 1319, 1568];
+    notes.forEach((freq, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      const t = audioCtx.currentTime + i * 0.1;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.5);
+    });
+  }
+
+  function playLose() {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(200, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.3);
+  }
+
+  function playSpin() {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(150, audioCtx.currentTime);
+    o.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.3);
+  }
+
+  // ---- Game State ----
+  const SYMBOLS = ['🍒', '🍋', '🔔', '💎', '7️⃣', '🍀', '⭐', '🧠'];
+  const PAYOUTS = {
+    '🧠': 50, '7️⃣': 25, '💎': 20, '⭐': 15,
+    '🔔': 10, '🍀': 8, '🍒': 5, '🍋': 3
+  };
+
+  function getItemH() {
+    return document.querySelector('.reel').offsetHeight;
+  }
+
+  let credits = 100;
+  let bet = 10;
+  const bets = [5, 10, 25, 50];
+  let betIndex = 1;
+  let spinning = false;
+  const reelResults = [0, 0, 0];
+
+  function buildStrip(reelEl) {
+    const strip = reelEl.querySelector('.reel-strip');
+    strip.innerHTML = '';
+    const ITEM_H = getItemH();
+    const totalItems = SYMBOLS.length + 20;
+    for (let i = 0; i < totalItems; i++) {
+      const div = document.createElement('div');
+      div.className = 'reel-item';
+      div.style.height = ITEM_H + 'px';
+      div.textContent = SYMBOLS[i % SYMBOLS.length];
+      strip.appendChild(div);
+    }
+    strip.style.top = '0px';
+  }
+
+  document.querySelectorAll('.reel').forEach(r => buildStrip(r));
+
+  function updateUI() {
+    document.getElementById('credits').textContent = credits;
+    document.getElementById('betDisplay').textContent = bet;
+  }
+
+  function spin() {
+    if (spinning || credits < bet) return;
+    ensureAudio();
+    spinning = true;
+    credits -= bet;
+    updateUI();
+
+    const ITEM_H = getItemH();
+    const winText = document.getElementById('winText');
+    winText.classList.remove('show');
+    document.getElementById('machine').classList.remove('winning');
+
+    playSpin();
+
+    for (let i = 0; i < 3; i++) {
+      reelResults[i] = Math.floor(Math.random() * SYMBOLS.length);
+    }
+
+    const reels = document.querySelectorAll('.reel');
+    let stoppedCount = 0;
+
+    reels.forEach((reel, idx) => {
+      const strip = reel.querySelector('.reel-strip');
+      strip.innerHTML = '';
+      const spins = 3 + idx * 2;
+      const totalItems = spins * SYMBOLS.length + reelResults[idx] + 1;
+      for (let i = 0; i < totalItems; i++) {
+        const div = document.createElement('div');
+        div.className = 'reel-item';
+        div.style.height = ITEM_H + 'px';
+        div.textContent = SYMBOLS[i % SYMBOLS.length];
+        strip.appendChild(div);
+      }
+
+      const targetTop = -((totalItems - 1) * ITEM_H);
+      strip.style.transition = 'none';
+      strip.style.top = '0px';
+
+      let tickInterval;
+      setTimeout(() => {
+        tickInterval = setInterval(playTick, 80);
+        strip.style.transition = `top ${1.2 + idx * 0.5}s cubic-bezier(0.15, 0.85, 0.35, 1)`;
+        strip.style.top = targetTop + 'px';
+
+        strip.addEventListener('transitionend', function handler() {
+          strip.removeEventListener('transitionend', handler);
+          clearInterval(tickInterval);
+          playReelStop();
+          stoppedCount++;
+          if (stoppedCount === 3) checkWin();
+        });
+      }, idx * 300);
+    });
+  }
+
+  function checkWin() {
+    const r = reelResults.map(i => SYMBOLS[i]);
+    let winAmount = 0;
+    let msg = '';
+
+    if (r[0] === r[1] && r[1] === r[2]) {
+      const multiplier = PAYOUTS[r[0]] || 5;
+      winAmount = bet * multiplier;
+      msg = r[0] === '🧠' ? '🧠 BRAIN JACKPOT! 🧠' : `🎰 JACKPOT! +${winAmount}`;
+      playJackpot();
+      spawnParticles();
+      document.getElementById('machine').classList.add('winning');
+    } else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) {
+      winAmount = bet * 2;
+      msg = `NICE! +${winAmount}`;
+      playWin();
+    } else {
+      playLose();
+    }
+
+    if (winAmount > 0) {
+      credits += winAmount;
+      updateUI();
+      const winText = document.getElementById('winText');
+      winText.textContent = msg;
+      winText.classList.add('show');
+    }
+
+    spinning = false;
+  }
+
+  function spawnParticles() {
+    const container = document.getElementById('particles');
+    const colors = ['#f0c040', '#ff6b6b', '#612692', '#4ade80', '#38bdf8'];
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = (20 + Math.random() * 40) + '%';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.animationDelay = Math.random() * 0.5 + 's';
+      p.style.width = p.style.height = (4 + Math.random() * 8) + 'px';
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 2000);
+    }
+  }
+
+  document.getElementById('spinBtn').addEventListener('click', spin);
+  document.getElementById('betBtn').addEventListener('click', () => {
+    if (spinning) return;
+    betIndex = (betIndex + 1) % bets.length;
+    bet = bets[betIndex];
+    updateUI();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); spin(); }
+  });
+
+  updateUI();
+</script>
+
+
+</body></html>

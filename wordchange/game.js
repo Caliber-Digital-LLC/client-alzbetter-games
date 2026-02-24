@@ -179,6 +179,16 @@ function applySettings() {
     }
     
     updateSettingsUI();
+    updateSoundIcon();
+}
+
+function updateSoundIcon() {
+    const soundOn = document.getElementById('icon-sound-on');
+    const soundOff = document.getElementById('icon-sound-off');
+    if (soundOn && soundOff) {
+        soundOn.classList.toggle('hidden', !State.settings.soundEnabled);
+        soundOff.classList.toggle('hidden', State.settings.soundEnabled);
+    }
 }
 
 function updateSettingsUI() {
@@ -816,7 +826,7 @@ function updateInstruction(text) {
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.classList.add('active');
+        modal.classList.remove('hidden');
         if (modalId === 'settings-modal') {
             updateSettingsUI();
         }
@@ -826,12 +836,12 @@ function openModal(modalId) {
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.classList.remove('active');
+        modal.classList.add('hidden');
     }
 }
 
 function closeAllModals() {
-    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
 }
 
 // Settings toggles
@@ -920,9 +930,13 @@ function setupEventListeners() {
     
     // Top bar buttons
     document.getElementById('settings-btn')?.addEventListener('click', () => openModal('settings-modal'));
-    document.getElementById('help-btn')?.addEventListener('click', () => {
+    document.getElementById('helpBtn')?.addEventListener('click', () => {
         showHelpPage(0);
         openModal('help-modal');
+    });
+    document.getElementById('soundBtn')?.addEventListener('click', () => {
+        toggleSetting('soundEnabled');
+        playSound('pickup');
     });
     
     // Powerup buttons
@@ -938,9 +952,9 @@ function setupEventListeners() {
         btn.addEventListener('click', closeAllModals);
     });
     
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeAllModals();
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeAllModals();
         });
     });
     

@@ -46,12 +46,12 @@
   --space-lg: 24px;
   --space-xl: 32px;
   
-  /* Cards */
-  --card-width: clamp(55px, 12vw, 80px);
-  --card-height: calc(var(--card-width) * 1.4);
-  --card-width-small: clamp(40px, 9vw, 55px);
-  --card-height-small: calc(var(--card-width-small) * 1.4);
-  --card-radius: 8px;
+  /* Cards — sized from vw so they're big enough on any phone */
+  --card-width: clamp(50px, min(16vw, 12dvh), 115px);
+  --card-height: calc(var(--card-width) * 1.42);
+  --card-width-small: clamp(36px, min(11vw, 8.5dvh), 80px);
+  --card-height-small: calc(var(--card-width-small) * 1.42);
+  --card-radius: clamp(5px, 1vmin, 12px);
   
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -76,9 +76,13 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.hidden {
+  display: none !important;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 18px;
+  font-size: clamp(14px, 1.8vw, 18px);
   line-height: 1.4;
   background: linear-gradient(180deg, var(--felt-color) 0%, var(--felt-dark) 100%);
   color: var(--text-primary);
@@ -93,12 +97,12 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background: linear-gradient(180deg, var(--felt-dark) 0%, var(--felt-color) 30%, var(--felt-color) 70%, var(--felt-dark) 100%);
   padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
   position: relative;
+  overflow: hidden;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -185,8 +189,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: clamp(24px, 8vw, 64px);
-  padding: 16px;
+  gap: clamp(14px, 4vw, 48px);
+  padding: clamp(6px, 1.2dvh, 12px) 16px;
   background: rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
@@ -215,6 +219,21 @@ body {
   color: var(--color-win);
 }
 
+.status-display {
+  min-width: clamp(130px, 34vw, 320px);
+}
+
+.status-display .status-value {
+  font-size: clamp(0.9rem, 2.6vw, 1.15rem);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-shadow: none;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    GAME AREA
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -223,10 +242,15 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: clamp(8px, 2vw, 24px) clamp(12px, 3vw, 32px);
-  overflow-y: auto;
-  gap: clamp(8px, 2vh, 16px);
-  justify-content: space-between;
+  padding: clamp(8px, 1.5dvh, 20px) clamp(10px, 2vw, 24px);
+  overflow: hidden;
+  min-height: 0;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: clamp(6px, 1.2dvh, 16px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -234,9 +258,11 @@ body {
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 .opponents-row {
+  width: 100%;
   display: flex;
   justify-content: space-around;
-  gap: 16px;
+  align-items: flex-start;
+  gap: clamp(8px, 2vw, 24px);
 }
 
 .opponent {
@@ -244,10 +270,10 @@ body {
   flex-direction: column;
   align-items: center;
   position: relative;
-  padding: 8px;
+  padding: clamp(6px, 1.2dvh, 14px) clamp(10px, 2vw, 20px);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
-  min-width: 100px;
+  min-width: clamp(100px, 22vw, 200px);
 }
 
 .opponent.folded {
@@ -266,27 +292,28 @@ body {
 }
 
 .opponent-name {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: clamp(1rem, 3.5vw, 1.4rem);
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .opponent-chips {
-  font-size: 0.75rem;
+  font-size: clamp(0.9rem, 3vw, 1.2rem);
   color: var(--accent-gold);
 }
 
 .opponent-cards {
   display: flex;
-  gap: 4px;
+  gap: clamp(4px, 1vw, 10px);
+  margin: clamp(4px, 1dvh, 8px) 0;
 }
 
 .opponent-action {
-  margin-top: 4px;
-  font-size: 0.75rem;
+  font-size: clamp(0.9rem, 3vw, 1.2rem);
   font-weight: 600;
   color: var(--accent-gold);
-  min-height: 1em;
+  min-height: 1.2em;
+  text-align: center;
 }
 
 .opponent-action.fold {
@@ -295,14 +322,14 @@ body {
 
 .dealer-button {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
+  top: -6px;
+  right: -6px;
+  width: clamp(18px, 3.5vmin, 26px);
+  height: clamp(18px, 3.5vmin, 26px);
   background: var(--accent-gold);
   color: var(--bg-dark);
   border-radius: 50%;
-  font-size: 0.7rem;
+  font-size: clamp(0.55rem, 1.2vmin, 0.75rem);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -319,21 +346,24 @@ body {
 
 .community-section {
   text-align: center;
-  padding: 8px 0;
+  padding: clamp(6px, 1.2dvh, 16px) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .community-label {
-  font-size: 0.75rem;
+  font-size: clamp(0.75rem, 2.2vw, 1rem);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: clamp(4px, 1dvh, 10px);
 }
 
 .community-cards {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: clamp(4px, 1vmin, 8px);
 }
 
 .card-slot {
@@ -406,20 +436,21 @@ body {
   color: var(--card-black);
 }
 
+/* Card text scales with card size for senior readability */
 .card .rank {
-  font-size: 1.5rem;
+  font-size: calc(var(--card-width) * 0.36);
 }
 
 .card .suit {
-  font-size: 1.25rem;
+  font-size: calc(var(--card-width) * 0.30);
 }
 
 .card.small .rank {
-  font-size: 1rem;
+  font-size: calc(var(--card-width-small) * 0.36);
 }
 
 .card.small .suit {
-  font-size: 0.875rem;
+  font-size: calc(var(--card-width-small) * 0.30);
 }
 
 .card.revealed {
@@ -439,11 +470,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
-  position: relative;
+  padding: clamp(10px, 1.5dvh, 20px) clamp(16px, 3vw, 32px);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 16px;
-  margin-top: auto;
+  min-width: clamp(220px, 45vw, 400px);
 }
 
 .player-section #dealer-player {
@@ -454,15 +484,16 @@ body {
 
 .player-cards {
   display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: clamp(6px, 1.5vw, 16px);
+  margin-bottom: clamp(6px, 1.2dvh, 12px);
 }
 
 .player-hand-label {
-  font-size: 0.875rem;
+  font-size: clamp(1rem, 3.5vw, 1.4rem);
   font-weight: 600;
   color: var(--accent-gold);
-  min-height: 1.25em;
+  min-height: 1.2em;
+  text-align: center;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -471,17 +502,18 @@ body {
 
 .bets-display {
   text-align: center;
-  min-height: 2em;
+  min-height: 1.8em;
+  margin-top: clamp(4px, 1dvh, 8px);
 }
 
 .bet-to-call {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
+  gap: 6px;
+  padding: clamp(4px, 0.8dvh, 8px) clamp(12px, 2.5vw, 20px);
   background: rgba(0, 0, 0, 0.3);
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: clamp(0.9rem, 3vw, 1.2rem);
 }
 
 .bet-to-call.hidden {
@@ -536,13 +568,8 @@ body {
    GAME STATUS
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-.game-status {
-  text-align: center;
-  padding: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
+/* (Game status now lives in the stats bar) */
+.game-status { display: none; }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    ACTION BAR
@@ -550,22 +577,25 @@ body {
 
 .action-bar {
   display: flex;
-  gap: clamp(6px, 1.5vw, 12px);
-  padding: clamp(12px, 2vw, 16px);
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+  padding: clamp(10px, 1.5dvh, 16px) clamp(12px, 2vw, 20px);
+  padding-bottom: calc(clamp(10px, 1.5dvh, 16px) + var(--safe-area-bottom));
   background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
 }
 
 .action-btn {
   flex: 1;
+  max-width: 200px;
   min-height: 48px;
-  height: clamp(48px, 10vh, 56px);
+  height: clamp(48px, 8dvh, 64px);
   border: none;
   border-radius: 12px;
-  font-size: clamp(0.875rem, 2.5vw, 1rem);
+  font-size: clamp(0.95rem, 3vw, 1.2rem);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -745,107 +775,159 @@ body {
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Phone Portrait */
-@media (max-height: 600px), (max-width: 400px) {
+/* Short viewports (landscape phones): shrink to keep everything on one screen */
+@media (max-height: 520px) {
   :root {
-    --card-width: clamp(45px, 10vw, 60px);
-    --card-width-small: clamp(35px, 8vw, 45px);
+    --card-width: clamp(40px, min(12vw, 11dvh), 75px);
+    --card-width-small: clamp(28px, min(8vw, 8dvh), 55px);
   }
-  
-  .opponents-row {
-    gap: 8px;
+
+  .header {
+    padding: 4px 12px;
   }
-  
+
+  .stats-bar {
+    padding: 4px 12px;
+  }
+
+  .game-area {
+    padding: 4px 10px;
+  }
+
   .opponent {
-    padding: 6px;
-    min-width: 80px;
+    padding: 4px 8px;
+    min-width: 90px;
   }
-  
+
+  .community-section {
+    padding: 2px 0;
+  }
+
+  .community-label {
+    display: none;
+  }
+
+  .player-section {
+    padding: 6px 12px;
+    min-width: 180px;
+  }
+
+  .player-cards {
+    margin-bottom: 4px;
+  }
+
+  .bet-to-call {
+    font-size: 0.75rem;
+  }
+
+  .bets-display {
+    min-height: 0;
+  }
+
+  .player-hand-label {
+    min-height: 0.9em;
+  }
+
+  .game-status {
+    font-size: 0.8rem;
+  }
+
+  .action-bar {
+    padding: 6px 10px;
+    padding-bottom: calc(6px + var(--safe-area-bottom));
+  }
+
+  .opponent {
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .action-btn {
+    height: clamp(42px, 8dvh, 56px);
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+  }
+}
+
+/* Tablet/desktop with limited height (iPad landscape, 1366x768, etc): pack tighter so player cards never clip */
+@media (min-width: 700px) and (max-height: 820px) {
+  :root {
+    /* Keep player cards readable but reduce overall vertical footprint */
+    --card-width: clamp(46px, min(9vw, 9dvh), 88px);
+    /* Opponent cards should be noticeably smaller than the player's */
+    --card-width-small: clamp(30px, min(5.8vw, 6.1dvh), 52px);
+  }
+
+  .stats-bar {
+    padding: 6px 14px;
+    gap: clamp(12px, 3.5vw, 44px);
+  }
+
+  .game-area {
+    padding: 6px 12px;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+
+  .opponent {
+    padding: 6px 12px;
+  }
+
+  .opponent-action {
+    font-size: clamp(0.8rem, 1.8vw, 1rem);
+  }
+
   .community-section {
     padding: 4px 0;
   }
-  
+
   .player-section {
-    padding: 8px;
+    padding: 10px 16px;
   }
-  
-  .community-cards {
-    gap: 4px;
+
+  .bets-display {
+    margin-top: 0;
+  }
+
+  .game-status {
+    padding: 0;
+  }
+
+  .action-bar {
+    padding: 10px 14px;
+    padding-bottom: calc(10px + var(--safe-area-bottom));
+  }
+
+  .action-btn {
+    height: clamp(46px, 7.2dvh, 60px);
   }
 }
 
-/* Tablet */
-@media (min-width: 600px) {
+/* Tablet and up: keep opponent cards smaller so the table stays balanced */
+@media (min-width: 768px) {
   :root {
-    --card-width: clamp(70px, 10vw, 100px);
-    --card-width-small: clamp(50px, 8vw, 70px);
+    /* Larger opponent cards on tablet/desktop (still smaller than player cards) */
+    --card-width-small: clamp(36px, min(7vw, 6.2dvh), 70px);
   }
-  
-  .game-area {
-    gap: 16px;
-  }
-  
-  .opponents-row {
-    gap: 24px;
-  }
-  
+
   .opponent {
-    padding: 12px;
-    min-width: 120px;
+    min-width: clamp(92px, 18vw, 180px);
   }
-  
-  .community-cards {
-    gap: 10px;
+
+  .bets-display {
+    margin-top: 4px;
   }
-  
-  .player-cards {
-    gap: 16px;
+
+  .status-display .status-value {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 }
 
-/* Desktop Landscape */
-@media (min-width: 768px) and (orientation: landscape) {
-  :root {
-    --card-width: clamp(80px, 8vw, 110px);
-    --card-width-small: clamp(60px, 6vw, 80px);
-  }
-  
+/* Wide screens: center the table without enlarging cards beyond fit */
+@media (min-width: 900px) {
   .game-area {
     max-width: 1200px;
     margin: 0 auto;
-    gap: 24px;
-  }
-  
-  .opponents-row {
-    gap: 32px;
-  }
-  
-  .opponent {
-    padding: 16px;
-    min-width: 140px;
-  }
-  
-  .community-cards {
-    gap: 12px;
-  }
-  
-  .player-cards {
-    gap: 20px;
-  }
-}
-
-/* Large Desktop */
-@media (min-width: 1200px) {
-  :root {
-    --card-width: 110px;
-    --card-width-small: 80px;
-  }
-  
-  .opponents-row {
-    gap: 48px;
-  }
-  
-  .opponent {
-    min-width: 160px;
   }
 }

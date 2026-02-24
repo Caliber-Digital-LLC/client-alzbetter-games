@@ -56,16 +56,9 @@ function resizeGameFunc(){
 			scalePercent = windowH/contentH;
 		}
 		
+		// Never upscale above 1x. Upscaling makes the in-canvas UI look overly spaced on
+		// tablets/desktops (super wide layout). Downscaling still applies for small screens.
 		scalePercent = scalePercent > 1 ? 1 : scalePercent;
-		
-		if(windowW > stageW && windowH > stageH){
-			if(windowW > stageW){
-				scalePercent = windowW/stageW;
-				if((stageH*scalePercent)>windowH){
-					scalePercent = windowH/stageH;
-				}	
-			}
-		}
 		
 		var newCanvasW = ((stageW)*scalePercent);
 		var newCanvasH = ((stageH)*scalePercent);

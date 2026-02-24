@@ -8,13 +8,15 @@
    ============================================================================ */
 :root {
     /* Card dimensions */
-    --card-width: clamp(50px, 11vw, 90px);
-    --card-height: clamp(70px, 15.4vw, 126px);
+    /* Slightly larger defaults for readability (seniors), while still fitting 7 columns */
+    --card-width: clamp(50px, 13vw, 110px);
+    --card-height: clamp(70px, 18.2vw, 154px);
     --card-radius: clamp(4px, 1vw, 8px);
-    --card-gap: clamp(4px, 1vw, 8px);
+    /* Tighten gap a bit so bigger cards still fit */
+    --card-gap: clamp(2px, 0.6vw, 8px);
     --card-font-size: clamp(14px, 3vw, 24px);
     --card-pip-size: clamp(10px, 2vw, 16px);
-    --tableau-offset: clamp(16px, 3.5vw, 28px);
+    --tableau-offset: clamp(16px, 3.5vw, 30px);
     
     /* Colors - Green felt theme */
     --bg-felt: #1a5a4a;
@@ -189,10 +191,12 @@ body::before {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: var(--spacing-sm);
+    /* Reduce outer padding so cards can be bigger without crowding */
+    padding: var(--spacing-xs);
     gap: var(--spacing-md);
     overflow: hidden;
     min-height: 0;
+    width: 100%;
 }
 
 /* Top Row: Stock, Waste, Foundations */
@@ -216,7 +220,7 @@ body::before {
 /* Tableau Area */
 .tableau-area {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     gap: var(--card-gap);
     flex: 1;
     min-height: 0;
@@ -415,6 +419,16 @@ body::before {
 
 .btn-outline:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+/* Outline buttons inside white modals need dark text/border */
+.modal-content .btn-outline {
+    border-color: #d1d5db;
+    color: #374151;
+}
+
+.modal-content .btn-outline:hover {
+    background: #f3f4f6;
 }
 
 .btn-large {
@@ -730,6 +744,18 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* ============================================================================
+   WIN ANIMATION CANVAS
+   ============================================================================ */
+#win-canvas {
+    animation: win-canvas-in 0.3s ease forwards;
+}
+
+@keyframes win-canvas-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ============================================================================
    UTILITY CLASSES
    ============================================================================ */
 .hidden {
@@ -782,9 +808,10 @@ input[type="range"]::-webkit-slider-thumb {
 /* Tablet */
 @media (min-width: 768px) {
     :root {
-        --card-width: clamp(70px, 9vw, 100px);
-        --card-height: clamp(98px, 12.6vw, 140px);
-        --tableau-offset: clamp(22px, 3vw, 32px);
+        --card-width: clamp(86px, 9.8vw, 124px);
+        --card-height: clamp(120px, 13.7vw, 174px);
+        --tableau-offset: clamp(26px, 3.2vw, 38px);
+        --card-gap: clamp(4px, 0.9vw, 12px);
     }
     
     .game-area {
@@ -792,16 +819,28 @@ input[type="range"]::-webkit-slider-thumb {
     }
 }
 
+/* Large phone / small tablet: prioritize readability (common senior tablet sizes) */
+@media (min-width: 600px) and (max-width: 1023px) and (orientation: portrait) {
+    :root {
+        --card-width: clamp(72px, 11.2vw, 120px);
+        --card-height: clamp(100px, 15.7vw, 168px);
+        --tableau-offset: clamp(24px, 3.6vw, 40px);
+        --card-gap: clamp(4px, 0.9vw, 12px);
+    }
+}
+
 /* Large tablet / desktop */
 @media (min-width: 1024px) {
     :root {
-        --card-width: 90px;
-        --card-height: 126px;
-        --tableau-offset: 28px;
+        /* Bigger cards on wide screens for readability */
+        --card-width: clamp(96px, 8.5vw, 140px);
+        --card-height: clamp(134px, 11.9vw, 196px);
+        --tableau-offset: clamp(28px, 2.8vw, 44px);
     }
     
     .game-area {
-        max-width: 900px;
-        margin: 0 auto;
+        /* Full width layout (use the whole horizontal space) */
+        max-width: none;
+        margin: 0;
     }
 }

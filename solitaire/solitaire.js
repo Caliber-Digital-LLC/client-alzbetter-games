@@ -137,12 +137,33 @@
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
+    function wasPageReloaded() {
+        try {
+            const navEntries = performance.getEntriesByType?.('navigation');
+            if (navEntries && navEntries.length > 0) {
+                return navEntries[0].type === 'reload';
+            }
+        } catch (e) {
+            // ignore
+        }
+        // Fallback for older browsers
+        // eslint-disable-next-line no-restricted-globals
+        return !!(performance && performance.navigation && performance.navigation.type === 1);
+    }
+
     function init() {
         cacheDOMReferences();
         loadSettings();
         loadStats();
         applySettings();
         setupEventListeners();
+
+        // Refresh/reload should always start a fresh game (no resume prompt).
+        if (wasPageReloaded()) {
+            clearGameState();
+            startNewGame();
+            return;
+        }
         
         // Check for saved game
         const savedGame = loadGameState();
@@ -152,7 +173,8 @@
                 'Would you like to continue your previous game?',
                 'Continue',
                 () => restoreGameState(savedGame),
-                () => startNewGame()
+                () => startNewGame(),
+                'New Game'
             );
         } else {
             startNewGame();
@@ -593,6 +615,43 @@
     // ========================================================================
     // SELECTION & INPUT
     // ========================================================================
+    
+    // Send a face-up card to its foundation pile if a valid slot exists.
+    // Called by dblclick (mouse) and manual double-tap detection (touch).
+    function sendCardToFoundation(card) {
+        if (State.inputLocked || State.gameWon) return false;
+        if (!card || !card.faceUp) return false;
+
+        const { pile, type, index } = findCardLocation(card);
+        if (!type) return false;
+
+        // Windows Solitaire behavior: only auto-send a single, free card.
+        // - Waste: only the top waste card
+        // - Tableau: only the top tableau card
+        if (type === 'waste') {
+            if (State.waste.length === 0 || State.waste[State.waste.length - 1].id !== card.id) {
+                return false;
+            }
+        } else if (type === 'tableau') {
+            const sourcePile = State.tableau[index];
+            if (!sourcePile || sourcePile.length === 0 || sourcePile[sourcePile.length - 1].id !== card.id) {
+                return false;
+            }
+        } else {
+            // Don’t auto-send from stock/foundations/unknown piles
+            return false;
+        }
+
+        const destIdx = findFoundationForCard(card);
+        if (destIdx === -1) {
+            playSound('invalid');
+            return false;
+        }
+
+        return moveCard(card, pile, type, index,
+            State.foundations[destIdx], 'foundation', destIdx);
+    }
+    
     function handleCardClick(cardEl, e) {
         if (State.inputLocked || State.gameWon) return;
         
@@ -627,16 +686,6 @@
                 selectCard(card, pile, type, index);
             }
             return;
-        }
-        
-        // Double-click/double-tap to auto-move to foundation
-        if (e.detail === 2) {
-            const destIdx = findFoundationForCard(card);
-            if (destIdx !== -1) {
-                moveCard(card, pile, type, index,
-                        State.foundations[destIdx], 'foundation', destIdx);
-                return;
-            }
         }
         
         // Select this card
@@ -721,10 +770,25 @@
     }
     
     function highlightValidDestinations(card) {
-        // Check foundations
-        for (let i = 0; i < 4; i++) {
-            if (isValidMove(card, State.foundations[i], 'foundation')) {
-                DOM.foundations[i].classList.add('valid-destination');
+        // Only highlight foundations when the selection is a single, free card.
+        let canHighlightFoundations = true;
+        if (State.selectedCard) {
+            if (State.selectedPileType === 'tableau') {
+                const pile = State.tableau[State.selectedPileIndex] || State.selectedPile;
+                const cardIdx = pile ? pile.findIndex(c => c.id === card.id) : -1;
+                const stackCount = (pile && cardIdx !== -1) ? (pile.length - cardIdx) : 99;
+                const isTopCard = pile && pile.length > 0 && pile[pile.length - 1].id === card.id;
+                canHighlightFoundations = isTopCard && stackCount === 1;
+            } else if (State.selectedPileType === 'waste') {
+                canHighlightFoundations = State.waste.length > 0 && State.waste[State.waste.length - 1].id === card.id;
+            }
+        }
+
+        if (canHighlightFoundations) {
+            for (let i = 0; i < 4; i++) {
+                if (isValidMove(card, State.foundations[i], 'foundation')) {
+                    DOM.foundations[i].classList.add('valid-destination');
+                }
             }
         }
         
@@ -1119,15 +1183,186 @@
         saveStats();
         clearGameState();
         
-        // Show win modal
+        // Prepare win modal content
         document.getElementById('win-moves').textContent = State.moves;
         document.getElementById('win-time').textContent = formatTime(elapsed);
         
         playSound('win');
         
-        setTimeout(() => {
-            openModal(DOM.winModal);
-        }, 500);
+        // Trigger the classic bouncing-cards animation, then show modal
+        triggerWinAnimation(() => openModal(DOM.winModal));
+    }
+    
+    // ========================================================================
+    // WIN ANIMATION — Classic "bouncing cards" (à la Windows Solitaire)
+    // ========================================================================
+    function triggerWinAnimation(onComplete) {
+        // Skip if user prefers reduced motion
+        if (State.settings.reducedMotion) {
+            setTimeout(onComplete, 400);
+            return;
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = 'win-canvas';
+        canvas.style.cssText = [
+            'position:fixed', 'top:0', 'left:0',
+            'width:100%', 'height:100%',
+            'z-index:1500', 'pointer-events:none'
+        ].join(';');
+        document.body.appendChild(canvas);
+        
+        // Size canvas to viewport in physical pixels for crisp rendering
+        const DPR = window.devicePixelRatio || 1;
+        const W = canvas.width  = window.innerWidth  * DPR;
+        const H = canvas.height = window.innerHeight * DPR;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(DPR, DPR);
+        const VW = window.innerWidth, VH = window.innerHeight;
+        
+        // Locate the four foundation slots so cards launch from there
+        const foundationRects = DOM.foundations.map(el => el.getBoundingClientRect());
+        
+        // Card display size (CSS px)
+        const CW = 56, CH = 78;
+        
+        const SUITS = [
+            { sym: '♠', col: '#1f2937' },
+            { sym: '♥', col: '#dc2626' },
+            { sym: '♦', col: '#dc2626' },
+            { sym: '♣', col: '#1f2937' }
+        ];
+        
+        // Spawn 6 waves of cards (one suit card per foundation, staggered)
+        const GRAVITY    = 0.38;
+        const BOUNCE_DAMP = 0.72;   // velocity kept on floor bounce
+        const FRICTION    = 0.97;
+        const TOTAL_FRAMES = 380;   // ≈ 6.3 s at 60 fps
+        const MODAL_AFTER  = 380;
+        
+        const flyingCards = [];
+        
+        function spawnWave() {
+            SUITS.forEach((suit, i) => {
+                const rect = foundationRects[i] || foundationRects[0];
+                const ox = rect.left + rect.width  / 2 - CW / 2;
+                const oy = rect.top  + rect.height / 2 - CH / 2;
+                flyingCards.push({
+                    x: ox, y: oy,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: -(Math.random() * 10 + 7),
+                    suit: suit.sym,
+                    col:  suit.col,
+                    bounces: 0
+                });
+            });
+        }
+        
+        // Spawn initial wave immediately, then two more after short delays
+        spawnWave();
+        setTimeout(spawnWave, 700);
+        setTimeout(spawnWave, 1400);
+        
+        // Helper: rounded rect path
+        function roundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+        
+        let frame = 0;
+        let completeCalled = false;
+        
+        function animate() {
+            ctx.clearRect(0, 0, VW, VH);
+            
+            flyingCards.forEach(card => {
+                // Physics
+                card.vy += GRAVITY;
+                card.vx *= FRICTION;
+                card.x  += card.vx;
+                card.y  += card.vy;
+                
+                // Bounce off floor
+                if (card.y + CH >= VH) {
+                    card.y  = VH - CH;
+                    card.vy = -Math.abs(card.vy) * BOUNCE_DAMP;
+                    card.vx *= 0.85;
+                    card.bounces++;
+                }
+                // Bounce off walls
+                if (card.x < 0)       { card.x = 0;        card.vx =  Math.abs(card.vx); }
+                if (card.x + CW > VW) { card.x = VW - CW;  card.vx = -Math.abs(card.vx); }
+                
+                // Draw card
+                ctx.save();
+                ctx.shadowColor   = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur    = 6;
+                ctx.shadowOffsetY = 3;
+                ctx.fillStyle = '#ffffff';
+                roundRect(card.x, card.y, CW, CH, 5);
+                ctx.fill();
+                ctx.shadowColor = 'transparent';
+                ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Large centred suit
+                ctx.fillStyle   = card.col;
+                ctx.font        = 'bold 28px Arial, sans-serif';
+                ctx.textAlign   = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(card.suit, card.x + CW / 2, card.y + CH / 2);
+                
+                // Small corner suit
+                ctx.font        = '11px Arial, sans-serif';
+                ctx.textAlign   = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(card.suit, card.x + 4, card.y + 4);
+                
+                ctx.restore();
+            });
+            
+            frame++;
+            
+            // Fade the canvas out in the last 50 frames
+            if (frame > TOTAL_FRAMES - 50) {
+                const alpha = (TOTAL_FRAMES - frame) / 50;
+                ctx.globalAlpha = 1 - alpha;
+            }
+            
+            if (frame < TOTAL_FRAMES) {
+                requestAnimationFrame(animate);
+            } else {
+                canvas.remove();
+                if (!completeCalled) {
+                    completeCalled = true;
+                    onComplete?.();
+                }
+            }
+        }
+        
+        requestAnimationFrame(animate);
+        
+        // Allow clicking anywhere to skip to modal immediately
+        const skipHandler = () => {
+            if (!completeCalled) {
+                completeCalled = true;
+                canvas.remove();
+                onComplete?.();
+            }
+            document.removeEventListener('pointerdown', skipHandler);
+        };
+        // Small delay so the first click that caused the win doesn't skip it
+        setTimeout(() => document.addEventListener('pointerdown', skipHandler, { once: true }), 800);
     }
     
     // ========================================================================
@@ -1467,10 +1702,11 @@
         document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
     }
     
-    function showConfirm(title, text, okText, onOk, onCancel) {
+    function showConfirm(title, text, okText, onOk, onCancel, cancelText = 'Cancel') {
         document.getElementById('confirm-title').textContent = title;
         document.getElementById('confirm-text').textContent = text;
         document.getElementById('confirm-ok').textContent = okText;
+        document.getElementById('confirm-cancel').textContent = cancelText;
         
         const confirmOk = document.getElementById('confirm-ok');
         const confirmCancel = document.getElementById('confirm-cancel');
@@ -1509,11 +1745,62 @@
         });
         
         // Card interactions
+        
+        // --- Mouse double-click: send card straight to foundation ---
+        // Use native 'dblclick' so the browser handles the timing reliably.
+        // We prevent the default to stop text selection on fast clicks.
+        DOM.gameArea.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            const cardEl = e.target.closest('.card');
+            if (!cardEl || cardEl.classList.contains('face-down')) return;
+            const cardId = parseInt(cardEl.dataset.cardId);
+            sendCardToFoundation(State.cards.get(cardId));
+        });
+        
+        // --- Touch double-tap: manual timing check (touch fires no dblclick) ---
+        let _lastTapTime = 0;
+        let _lastTapCardId = null;
+
+        // Also suppress the second mouse down of a double-click so it doesn't
+        // clear the selection/highlights before the dblclick event fires.
+        let _lastMouseDownTime = 0;
+        let _lastMouseCardId = null;
+        
         DOM.gameArea.addEventListener('pointerdown', (e) => {
             const cardEl = e.target.closest('.card');
             const slotEl = e.target.closest('.card-slot');
             
             if (cardEl && !cardEl.classList.contains('face-down')) {
+                // Mouse double-click suppression: keep selection/highlights stable
+                if (e.pointerType === 'mouse') {
+                    const now = Date.now();
+                    const sameCard = _lastMouseCardId === cardEl.dataset.cardId;
+                    const quick = (now - _lastMouseDownTime) < 350;
+                    _lastMouseDownTime = now;
+                    _lastMouseCardId = cardEl.dataset.cardId;
+                    if (sameCard && quick) {
+                        return;
+                    }
+                }
+
+                // Touch double-tap detection
+                if (e.pointerType === 'touch') {
+                    const now = Date.now();
+                    const sameCard = _lastTapCardId === cardEl.dataset.cardId;
+                    const quickTap  = (now - _lastTapTime) < 350;
+                    if (sameCard && quickTap) {
+                        // This is the second tap — send to foundation
+                        e.preventDefault();
+                        _lastTapTime  = 0;   // reset so a third tap doesn't retrigger
+                        _lastTapCardId = null;
+                        const cardId = parseInt(cardEl.dataset.cardId);
+                        sendCardToFoundation(State.cards.get(cardId));
+                        return;
+                    }
+                    _lastTapTime  = now;
+                    _lastTapCardId = cardEl.dataset.cardId;
+                }
+                
                 if (State.settings.tapMode) {
                     handleCardClick(cardEl, e);
                 } else {
