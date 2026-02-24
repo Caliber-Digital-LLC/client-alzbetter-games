@@ -48,6 +48,7 @@
   display: flex;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 250ms ease, visibility 250ms ease;
 }
 
@@ -56,6 +57,7 @@
 #rulesModal.modal-overlay.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 /* For games that use .modal as the backdrop + .hidden to hide */
