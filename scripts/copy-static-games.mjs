@@ -10,6 +10,7 @@ const outputRoot = path.join(repoRoot, 'dist', 'public');
 
 const foldersToCopy = [
   'shared',
+  'checkers',
   'craps',
   'poker',
   'roulette',

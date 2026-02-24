@@ -81,6 +81,16 @@
       "iconSvg": "/icons/solitaire.svg",
       "gradient": ["#1a5a4a", "#0d3d33"],
       "order": 8
+    },
+    {
+      "id": "checkers",
+      "title": "Checkers",
+      "description": "Classic checkers with tap/drag moves and gentle hints.",
+      "path": "/checkers/",
+      "external": true,
+      "iconSvg": "/icons/checkers.svg",
+      "gradient": ["#1a5a4a", "#0d3d33"],
+      "order": 9
     }
   ]
 }

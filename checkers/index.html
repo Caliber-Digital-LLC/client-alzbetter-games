@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Checkers - AlzBetter Games</title>
+
+  <link rel="stylesheet" href="../shared/casino-theme.css" />
+  <link rel="stylesheet" href="../shared/casino-components.css" />
+  <link rel="stylesheet" href="../shared/help-modal.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="game-container">
+    <header class="header">
+      <h1 class="header-title"><img src="/icons/checkers.svg" class="title-icon" alt="" /> Checkers</h1>
+      <div class="header-actions">
+        <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">
+          <svg class="sound-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+          <svg class="sound-off-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <line x1="22" y1="9" x2="16" y2="15" />
+            <line x1="16" y1="9" x2="22" y2="15" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="helpBtn" aria-label="Help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <path d="M12 17h.01" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-label">Turn</span>
+        <span class="stat-value" id="turnLabel">You</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">You</span>
+        <span class="stat-value" id="redCount">12</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Computer</span>
+        <span class="stat-value" id="blackCount">12</span>
+      </div>
+    </div>
+
+    <main class="game-area">
+      <div class="status-line" id="statusLine" aria-live="polite">Tap a piece to see moves. Drag also works.</div>
+
+      <div class="board-wrap">
+        <div id="board" class="board" role="grid" aria-label="Checkers board"></div>
+      </div>
+
+      <div class="controls">
+        <button id="newGameBtn" class="primary-btn" type="button">New Game</button>
+      </div>
+    </main>
+
+    <!-- Help / Rules Modal (shared style) -->
+    <div id="rulesModal" class="modal-overlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+        <button class="modal-close" id="closeRulesBtn" aria-label="Close">×</button>
+        <h2 id="rulesTitle">How to Play</h2>
+
+        <div class="modal-body">
+          <p><strong>Goal:</strong> capture all opponent pieces or leave them with no legal moves.</p>
+          <ul>
+            <li><strong>Move:</strong> diagonally forward to an empty square.</li>
+            <li><strong>Capture:</strong> jump diagonally over an opponent piece to an empty square.</li>
+            <li><strong>Multi-jump:</strong> if you can capture again with the same piece, you keep jumping.</li>
+            <li><strong>Kings:</strong> reach the far row to become a king and move both directions.</li>
+            <li><strong>Casual rules:</strong> captures are <em>not</em> forced (you may choose a normal move).</li>
+          </ul>
+          <p><strong>Controls:</strong> tap a piece to highlight moves, then tap a highlighted square to move. You can also drag a piece to a highlighted square.</p>
+          <p><strong>Hints:</strong> highlighted squares show legal moves.</p>
+          <p><strong>Computer:</strong> plays like a human — sometimes it makes mistakes.</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="primary-btn" id="gotItBtn" type="button">Got it</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/casino-utils.js"></script>
+  <script src="checkers.js"></script>
+</body>
+</html>

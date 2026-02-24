@@ -5,6 +5,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/checkers/:path*",
+      "destination": "/checkers/:path*"
+    },
+    {
       "source": "/slots/:path*",
       "destination": "/slots/:path*"
     },
@@ -41,7 +45,7 @@
       "destination": "/shared/:path*"
     },
     {
-      "source": "/((?!slots|blackjack|roulette|poker|holdem|craps|wordchange|solitaire|shared).*)",
+      "source": "/((?!checkers|slots|blackjack|roulette|poker|holdem|craps|wordchange|solitaire|shared).*)",
       "destination": "/index.html"
     }
   ]
